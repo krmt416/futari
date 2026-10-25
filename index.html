@@ -122,6 +122,21 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .tag.a{background:var(--aSoft);color:var(--a)} .tag.b{background:var(--bSoft);color:var(--b)}
 .tag.k{background:var(--surface2);color:var(--muted)}
 .empty{padding:28px 18px;text-align:center;color:var(--muted);font-size:14px}
+.mcard{background:var(--surface);border-radius:18px;padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.mnav{display:flex;align-items:center;gap:6px}
+.mstep{width:40px;height:40px;border-radius:50%;border:0;background:var(--surface2);font-size:22px;font-weight:800;line-height:1;display:grid;place-items:center;padding:0}
+.mstep:disabled{opacity:.3}
+.mlabel{border:0;background:none;font-size:18px;font-weight:800;padding:6px 8px}
+.mpill{margin-left:auto;background:var(--aSoft);color:var(--a);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:800}
+.msum{display:flex;flex-direction:column}
+.msum small{font-size:12px;color:var(--muted);font-weight:700}
+.msum b{font-family:var(--numf);font-size:28px;font-weight:800}
+.mtiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mt{border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.mt small{font-size:12px;font-weight:800}
+.mt b{font-family:var(--numf);font-size:19px;font-weight:800}
+.mt.a{background:var(--aBg)}.mt.a small{color:var(--a)}
+.mt.b{background:var(--bBg)}.mt.b small{color:var(--b)}
 .monthhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 2px 8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .monthhead b{color:var(--fg);font-size:15px}
 .mini{border:1px solid var(--line);background:none;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--fg)}
@@ -528,11 +543,12 @@ const CATRULES = [
   ["clothes", /しまむら|ユニクロ|\bGU\b|ZARA|服|パーカー|靴下|靴|ジャケット|コート|ワンピ/i],
   ["travel",  /ホテル|旅館|宿泊|飛行機|航空|ツアー|旅行|両替|パスポート|ESTA|ビザ|空港|ラスベガス|ロサンゼルス|ヨーロッパ|ハワイ|沖縄旅|船代|福岡/i],
   ["gift",    /お土産|ギフト|プレゼント|お花|^花$|誕生日|ご祝儀|祝い/],
-  ["leisure", /映画|カラオケ|ポップコーン|プリクラ|ガチャ|一番くじ|ダーツ|シーシャ|サウナ|岩盤浴|スノボ|スキー|ライブ|ミスチ|コナン|ボウリング|ゲーセン|チケット|Abema|Netflix|ディズニー|ゲーム|^本$|漫画|バイオハザード|サイレントヒル|コントローラー|Switch|Spotify|スクイーズ|まねきねこ|カラオケ館/i],
+  ["leisure", /銭湯|温泉|映画|カラオケ|ポップコーン|プリクラ|ガチャ|一番くじ|ダーツ|シーシャ|サウナ|岩盤浴|スノボ|スキー|ライブ|ミスチ|コナン|ボウリング|ゲーセン|チケット|Abema|Netflix|ディズニー|ゲーム|^本$|漫画|バイオハザード|サイレントヒル|コントローラー|Switch|Spotify|スクイーズ|まねきねこ|カラオケ館/i],
   ["transport", /タクシー|電車|Suica|スイカ|PASMO|パスモ|新幹線|高速|ガソリン|駐車場|タイムズ|カーシェア|レンタカー|成田エクスプレス|ETC|首都高/i],
-  ["cafe",    /スタバ|スターバックス|ドトール|タリーズ|サンマルク|カフェ|珈琲|コーヒー|ラテ|タピオカ|ゴンチャ|ミスド|ミスタードーナツ|クレープ|ハーブス|アンジェリーナ|カーム|^31$|サーティワン|ティー|喫茶|ケーキ|ビアードパパ|スイーツ|パフェ|ドーナツ/],
+  ["cafe",    /スタバ|スターバックス|ドトール|タリーズ|サンマルク|カフェ|珈琲|コーヒー|ラテ|タピオカ|ゴンチャ|ミスド|ミスタードーナツ|クレープ|ハーブス|アンジェリーナ|カーム|^31$|サーティワン|^ティー|ミルクティー|喫茶|ケーキ|ビアードパパ|スイーツ|パフェ|ドーナツ/],
   ["daily",   /ダイソー|キャンドゥ|セリア|スリーコインズ|無印|ニトリ|IKEA|ドンキ|ボディソープ|トイレットペーパー|キッチンペーパー|タオル|入浴剤|洗剤|シャンプー|ティッシュ|Amazon|ウエルシア|ウェルシア|マツキヨ|ツルハ|ぱぱす|スギ薬局|ヨドバシ|ビック|トモズ|ゴキジェット|ポットクリン|虫除け|ミキサー|粗大ゴミ|電池|ゴミ袋/i],
-  ["grocery", /まいばす|マイバス|東急ストア|いなげや|コストコ|業務スーパー|スーパー|ロケットナウ|ファミマ|ファミリーマート|セブン|ローソン|コンビニ|NewDays|ニューデイズ|カルディ|成城石井|OK|ライフ|きゅうり|チーズ|^パン$|^水$|お茶|爽健美茶|コーラ|ポテチ|ビール|レッドブル|ジャスミン茶|アイス|野菜|果物|肉|卵|牛乳|豆腐|お菓子|グミ|じゃがりこ|綾鷹|炭酸水|コーン茶|^のり$|お米|めんつゆ|ジュース|飲み物|おにぎり/i],
+  ["eat",     /焼肉|焼き肉|焼き鳥|焼鳥|バーガー|ランチ|ディナー|居酒屋|飲み会|ステーキ/],
+  ["grocery", /まいばす|マイバス|東急ストア|いなげや|コストコ|業務スーパー|スーパー|ロケットナウ|ファミマ|ファミリーマート|セブン|ローソン|コンビニ|NewDays|ニューデイズ|カルディ|成城石井|^OK$|OKストア|オーケー|ライフ|きゅうり|チーズ|^パン$|^水$|お茶|爽健美茶|コーラ|ポテチ|ビール|レッドブル|ジャスミン茶|アイス|野菜|果物|肉|卵|牛乳|豆腐|お菓子|グミ|じゃがりこ|綾鷹|炭酸水|コーン茶|^のり$|お米|めんつゆ|ジュース|飲み物|おにぎり/i],
   ["eat",     /マック|マクドナルド|モス|バーガー|ケンタッキー|チキン|CoCo壱|カレー|日高屋|大戸屋|松屋|すき家|吉野家|牛丼|うどん|そば|ラーメン|つけ麺|油そば|蒙古|味仙|麻辣|火鍋|中華|餃子|居酒屋|トリキ|磯丸|赤から|水炊き|焼肉|焼き鳥|焼鳥|寿司|スシロー|サイゼ|ガスト|五右衛門|パスタ|ピザ|ドミノ|とんかつ|ステーキ|オムライス|沖縄料理|ランチ|ディナー|朝食|ご飯|飲み会|ビストロ|食堂|レストラン|銀だこ|くず餅|ウーバーイーツ|menu|出前館|デリバリー|^ばん$|ふたご|春日亭|一風堂|ウェンディーズ|屋台|お昼|蟹|喫茶店ランチ|まるきん|みんみん|しんぱち/i]
   ,["other",   /^サン$|^クローク$|^ロッカー$|チャージスポット|結婚式/]
 ];
@@ -721,11 +737,50 @@ function rowEntry(e){
 const searchNorm = v => String(v == null ? "" : v).normalize("NFKC").toLowerCase()
   .replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60))
   .replace(/\s+/g, " ").trim();
+const MONTH_RE = /^\d{4}-\d{2}$/;
+const curMonth = () => { const t = ym(today()); return S.filter === "this" ? t : S.filter === "last" ? prevMonth(t) : MONTH_RE.test(S.filter) ? S.filter : null; };
+const shiftMonth = (m, d) => { const x = new Date(m + "-01T00:00:00"); x.setMonth(x.getMonth() + d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}`; };
+const monthLabel = m => `${m.slice(0, 4)}年${+m.slice(5)}月`;
+function monthCardHTML(cm, shown){
+  const thisM = ym(today());
+  const all = [...S.entries.map(e => e.date), ...S.settlements.map(x => x.date)].map(ym).filter(Boolean).sort();
+  const minM = all[0] || cm;
+  const filtering = !!(S.q || S.cat), es = (filtering ? shown : S.entries.filter(e => ym(e.date) === cm)).filter(e => e.type !== "loan");
+  const ta = es.filter(e => e.payer === "a").reduce((c, e) => c + e.amount, 0), tb = es.filter(e => e.payer === "b").reduce((c, e) => c + e.amount, 0);
+  const st = S.settlements.filter(x => ym(x.date) === cm).reduce((c, x) => c + x.amount, 0);
+  return `<div class="mcard">
+    <div class="mnav"><button type="button" class="mstep" data-mshift="-1" aria-label="前の月" ${cm <= minM ? "disabled" : ""}>‹</button>
+      <button type="button" class="mlabel" data-mpick aria-label="月を選ぶ">${monthLabel(cm)} ▾</button>
+      <button type="button" class="mstep" data-mshift="1" aria-label="次の月" ${cm >= thisM ? "disabled" : ""}>›</button>
+      ${st ? `<span class="mpill">返済 ${yen(st)}</span>` : ""}</div>
+    <div class="msum"><small>立て替え合計（${es.length}件${filtering ? "・絞り込み中" : ""}）</small><b class="num">${yen(ta + tb)}</b></div>
+    <div class="mtiles"><div class="mt a"><small>${esc(S.settings.nameA)}</small><b class="num">${yen(ta)}</b></div><div class="mt b"><small>${esc(S.settings.nameB)}</small><b class="num">${yen(tb)}</b></div></div>
+    ${cm < thisM ? `<button class="mini" data-recap="${cm}" style="align-self:flex-start">この月の振り返り</button>` : ""}
+  </div>`;
+}
+function monthPickerSheet(){
+  const by = new Map();
+  S.entries.forEach(e => { const k = ym(e.date); if(!k) return; const o = by.get(k) || { n: 0, sum: 0 }; o.n++; if(e.type !== "loan") o.sum += e.amount; by.set(k, o); });
+  S.settlements.forEach(x => { const k = ym(x.date); if(k && !by.has(k)) by.set(k, { n: 0, sum: 0 }); });
+  const months = [...by.keys()].sort().reverse();
+  let year = "", rows = "";
+  months.forEach(k => {
+    if(k.slice(0, 4) !== year){ year = k.slice(0, 4); rows += `<div class="flabel" style="margin:12px 4px 4px">${year}年</div>`; }
+    const o = by.get(k); rows += `<button type="button" class="ce-row" data-pickm="${k}" style="background:var(--surface)"><span>${+k.slice(5)}月</span><span class="chev num">${yen(o.sum)}・${o.n}件</span></button>`;
+  });
+  openSheet(`<div class="shead"><button class="link" data-close>閉じる</button><h3>月を選ぶ</h3><span></span></div>
+    ${months.length ? `<div>${rows}</div>` : `<div class="empty">まだ記録がありません</div>`}`, "", sheet => {
+    sheet.addEventListener("click", ev => {
+      const b = ev.target.closest("[data-pickm]"); if(!b) return;
+      S.filter = b.dataset.pickm; S.limit = 300; closeSheet(); render(); window.scrollTo(0, 0);
+    });
+  });
+}
 function listBodyHTML(){
   const thisM = ym(today()), lastM = prevMonth(thisM);
   let items = sorted(S.entries);
-  if(S.filter === "this") items = items.filter(e => ym(e.date) === thisM);
-  if(S.filter === "last") items = items.filter(e => ym(e.date) === lastM);
+  const cm = curMonth();
+  if(cm) items = items.filter(e => ym(e.date) === cm);
   if(S.cat) items = items.filter(e => catOf(e.category).id === S.cat && !(e.type === "loan" && !e.category));
   const q = S.q.trim();
   if(q){
@@ -746,17 +801,20 @@ function listBodyHTML(){
     const full = allGroups.get(k) || arr;
     const ta = full.filter(e => e.payer==="a" && e.type!=="loan").reduce((s,e) => s+e.amount, 0);
     const tb = full.filter(e => e.payer==="b" && e.type!=="loan").reduce((s,e) => s+e.amount, 0);
-    body += `<section><div class="monthhead"><b>${k.slice(0,4)}年${+k.slice(5)}月</b><span class="num">${esc(S.settings.nameA)} ${yen(ta)} ・ ${esc(S.settings.nameB)} ${yen(tb)}</span>${k < thisM ? `<button class="mini" data-recap="${k}">振り返り</button>` : ""}</div>
+    body += `<section>${cm ? "" : `<div class="monthhead"><b>${k.slice(0,4)}年${+k.slice(5)}月</b><span class="num">${esc(S.settings.nameA)} ${yen(ta)} ・ ${esc(S.settings.nameB)} ${yen(tb)}</span>${k < thisM ? `<button class="mini" data-recap="${k}">振り返り</button>` : ""}</div>`}
       <div class="list">${arr.map(rowEntry).join("")}</div></section>`;
   }
   if(!body) body = `<div class="list"><div class="empty">${q ? "見つかりませんでした" : "この期間の記録はありません"}</div></div>`;
+  if(cm) body = monthCardHTML(cm, items) + body;
   if(total > items.length) body += `<button type="button" class="btn" data-more style="width:100%;margin-top:12px">さらに表示（残り${(total - items.length).toLocaleString("ja-JP")}件）</button>`;
   return body;
 }
 function viewList(){
-  const chip = (k,l) => `<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`;
+  const cm = curMonth(), t0 = ym(today());
+  const chip = (k,l,on) => `<button class="chip" data-filter="${k}" aria-pressed="${on}">${l}</button>`;
+  const odd = cm && cm !== t0 && cm !== prevMonth(t0);
   return `${headHTML("立て替えリスト")}
-    <div class="chips">${chip("all","すべて")}${chip("this","今月")}${chip("last","先月")}${S.cat ? `<button class="catfilter" data-catclear aria-label="カテゴリの絞り込みを解除">${catOf(S.cat).icon} ${esc(catOf(S.cat).label)} ✕</button>` : ""}</div>
+    <div class="chips">${chip("all","全履歴",!cm)}${chip("this","今月",cm === t0)}${chip("last","先月",cm === prevMonth(t0))}<button class="chip" data-mpick aria-pressed="${!!odd}">${odd ? monthLabel(cm) : "月を選ぶ"} ▾</button>${S.cat ? `<button class="catfilter" data-catclear aria-label="カテゴリの絞り込みを解除">${catOf(S.cat).icon} ${esc(catOf(S.cat).label)} ✕</button>` : ""}</div>
     <input class="search" id="q" type="search" placeholder="件名・カテゴリ・名前・金額で検索" value="${esc(S.q)}" aria-label="検索">
     <div class="view" id="listbody">${listBodyHTML()}</div>`;
 }
@@ -850,7 +908,7 @@ function bindKeypad(sheet, st, onChange){
     const map = { "+":"+", "-":"−", "*":"×", "x":"×", "/":"÷", "Backspace":"⌫", "Delete":"C", "Escape":null };
     if(/^[0-9]$/.test(ev.key)) { press(ev.key); ev.preventDefault(); }
     else if(ev.key in map && map[ev.key]) { press(map[ev.key]); ev.preventDefault(); }
-    else if(ev.key === "Enter"){ const s = $("#save", sheet); if(!s.disabled) s.click(); ev.preventDefault(); }
+    else if(ev.key === "Enter" && !ev.target.closest("button")){ const s = $("#save", sheet); if(!s.disabled) s.click(); ev.preventDefault(); }
   });
 }
 function amountView(expr){
@@ -1049,7 +1107,7 @@ function catEditor(){
     sheet.addEventListener("click", ev => {
       const t = ev.target;
       const row = t.closest("[data-ce]"); if(row){ const c = catOf(row.dataset.ce); ce.mode = "edit"; ce.id = c.id; ce.icon = c.icon; ce.name = c.label; show(); return; }
-      if(t.closest("[data-ce-new]")){ ce.mode = "edit"; ce.id = ""; ce.icon = "🏷"; ce.name = ""; show(); const n = $("#ce-name", sheet); n && n.focus(); return; }
+      if(t.closest("[data-ce-new]")){ if(cats().length >= 40){ toast("カテゴリは40個までです"); return; } ce.mode = "edit"; ce.id = ""; ce.icon = "🏷"; ce.name = ""; show(); const n = $("#ce-name", sheet); n && n.focus(); return; }
       if(t.closest("[data-ce-back]")){ ce.mode = "list"; show(); return; }
       const em = t.closest("[data-em]"); if(em){ ce.icon = em.dataset.em; $("#ce-prev", sheet).textContent = ce.icon; $("#ce-em", sheet).value = ""; $$("#ce-grid button", sheet).forEach(b => b.setAttribute("aria-pressed", b === em)); return; }
       if(t.closest("[data-ce-save]")){
@@ -1108,6 +1166,7 @@ function parseOldCsv(text){
     const m = /^(\d{4})\D+(\d{1,2})\D+(\d{1,2})/.exec(String(date).trim());
     if(!(amount > 0) || !m){ out.bad.push(r.join(",")); return; }
     const ymd = `${m[1]}-${String(m[2]).padStart(2, "0")}-${String(m[3]).padStart(2, "0")}`;
+    { const d0 = new Date(ymd + "T00:00:00Z"); if(isNaN(d0) || d0.toISOString().slice(0, 10) !== ymd){ out.bad.push(r.join(",")); return; } }
     const mv = /^(.+?)\s*から\s*(.+)$/.exec(payer.trim());
     if(mv){ const f = names[mv[1].trim()], t = names[mv[2].trim()]; if(!f || !t || f === t){ out.unknown.add(payer.trim()); return; } out.items.push({ title, amount, date: ymd, settle: true, who: f }); return; }
     const w = names[payer.trim()]; if(!w){ out.unknown.add(payer.trim()); return; }
@@ -1218,8 +1277,8 @@ function importSheet(){
 
 /* ================= 未分類を自動で分類 ================= */
 function autoCatSheet(){
-  const plan = S.entries.filter(e => !e.category).map(e => ({ id: e.id, category: autoCatId(e.title) })).filter(x => x.category);
-  const unclassified = S.entries.filter(e => !e.category).length;
+  const plan = S.entries.filter(e => !e.category && e.type !== "loan").map(e => ({ id: e.id, category: autoCatId(e.title) })).filter(x => x.category);
+  const unclassified = S.entries.filter(e => !e.category && e.type !== "loan").length;
   const by = new Map(); plan.forEach(x => by.set(x.category, (by.get(x.category) || 0) + 1));
   const rows = [...by.entries()].sort((a, b) => b[1] - a[1]);
   const st = { busy: false, err: "", prog: "" };
@@ -1416,9 +1475,11 @@ document.addEventListener("click", ev => {
   if($("#layer").innerHTML) return;
   const ed = t.closest("[data-edit]"); if(ed){ const e = S.entries.find(x => x.id === ed.dataset.edit); if(e) entrySheet(e); return; }
   const se = t.closest("[data-settle]"); if(se){ const s = S.settlements.find(x => x.id === se.dataset.settle); if(s) settleSheet(s); return; }
+  if(t.closest("[data-mpick]")) return monthPickerSheet();
+  const ms = t.closest("[data-mshift]"); if(ms){ const cm = curMonth(); if(cm){ S.filter = shiftMonth(cm, +ms.dataset.mshift); S.limit = 300; render(); } return; }
   const fl = t.closest("[data-filter]"); if(fl){ S.filter = fl.dataset.filter; S.limit = 300; render(); return; }
   if(t.closest("[data-more]")){ S.limit += 300; const lb = $("#listbody"); if(lb) lb.innerHTML = listBodyHTML(); return; }
-  const cg = t.closest("[data-catgo]"); if(cg){ S.limit = 300; S.cat = cg.dataset.catgo; S.filter = cg.dataset.month === ym(today()) ? "this" : "all"; S.q = ""; return goTab("list"); }
+  const cg = t.closest("[data-catgo]"); if(cg){ S.limit = 300; S.cat = cg.dataset.catgo; S.filter = MONTH_RE.test(cg.dataset.month || "") ? cg.dataset.month : "all"; S.q = ""; return goTab("list"); }
   if(t.closest("[data-catclear]")){ S.cat = ""; render(); return; }
   const m = t.closest("[data-me]"); if(m){ S.me = m.dataset.me; ls.set("me", S.me); render(); return; }
   const ds = t.closest("[data-defshare]"); if(ds) saveSettings({ defaultShare: +ds.dataset.defshare });
