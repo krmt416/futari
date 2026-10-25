@@ -400,7 +400,7 @@ const S = {
   settings: { nameA: "しゅん", nameB: "もえ", defaultShare: 0.5 },
   entries: [], settlements: [],
   me: ls.get("me", ""), tab: "home",
-  filter: "all", q: "", cat: "", ready: false, err: "", pass: ls.get("pass", ""), locked: false,
+  filter: "this", limit: 300, q: "", cat: "", ready: false, err: "", pass: ls.get("pass", ""), locked: false,
   synced: 0, offline: false,
   seenAt: +ls.get("seenAt", "0") || 0, dotSince: 0,
   heroDigits: ""
@@ -517,10 +517,31 @@ function catStats(list){
   const total = [...m.values()].reduce((a,c) => a + c.sum, 0);
   return { total, rows: [...m.values()].sort((a,b) => b.sum - a.sum) };
 }
+/* ================= 件名からカテゴリを推測 ================= */
+// 件名から、カテゴリを推測するルール（上から順に判定）
+const CATRULES = [
+  ["utility", /水道|電気・ガス|電気代|電気料金|でんき|ガス代|楽天ガス|光熱/],
+  ["telecom", /通信費|携帯|スマホ代|Wi-?Fi|wifi|ネット代|ギガ/i],
+  ["home",    /家賃|管理費|駐輪|引越|引っ越し|家具|火災保険|敷金|礼金/],
+  ["medical", /コンタクト|病院|クリニック|薬局|処方|歯科|歯医者|眼科|皮膚科|診察|整骨|整体/],
+  ["beauty",  /美容|ヘア|カット|ネイル|エステ|コスメ|化粧|スキンケア|まつげ|脱毛/],
+  ["clothes", /しまむら|ユニクロ|\bGU\b|ZARA|服|パーカー|靴下|靴|ジャケット|コート|ワンピ/i],
+  ["travel",  /ホテル|旅館|宿泊|飛行機|航空|ツアー|旅行|両替|パスポート|ESTA|ビザ|空港|ラスベガス|ロサンゼルス|ヨーロッパ|ハワイ|沖縄旅|船代|福岡/i],
+  ["gift",    /お土産|ギフト|プレゼント|お花|^花$|誕生日|ご祝儀|祝い/],
+  ["leisure", /映画|カラオケ|ポップコーン|プリクラ|ガチャ|一番くじ|ダーツ|シーシャ|サウナ|岩盤浴|スノボ|スキー|ライブ|ミスチ|コナン|ボウリング|ゲーセン|チケット|Abema|Netflix|ディズニー|ゲーム|^本$|漫画|バイオハザード|サイレントヒル|コントローラー|Switch|Spotify|スクイーズ|まねきねこ|カラオケ館/i],
+  ["transport", /タクシー|電車|Suica|スイカ|PASMO|パスモ|新幹線|高速|ガソリン|駐車場|タイムズ|カーシェア|レンタカー|成田エクスプレス|ETC|首都高/i],
+  ["cafe",    /スタバ|スターバックス|ドトール|タリーズ|サンマルク|カフェ|珈琲|コーヒー|ラテ|タピオカ|ゴンチャ|ミスド|ミスタードーナツ|クレープ|ハーブス|アンジェリーナ|カーム|^31$|サーティワン|ティー|喫茶|ケーキ|ビアードパパ|スイーツ|パフェ|ドーナツ/],
+  ["daily",   /ダイソー|キャンドゥ|セリア|スリーコインズ|無印|ニトリ|IKEA|ドンキ|ボディソープ|トイレットペーパー|キッチンペーパー|タオル|入浴剤|洗剤|シャンプー|ティッシュ|Amazon|ウエルシア|ウェルシア|マツキヨ|ツルハ|ぱぱす|スギ薬局|ヨドバシ|ビック|トモズ|ゴキジェット|ポットクリン|虫除け|ミキサー|粗大ゴミ|電池|ゴミ袋/i],
+  ["grocery", /まいばす|マイバス|東急ストア|いなげや|コストコ|業務スーパー|スーパー|ロケットナウ|ファミマ|ファミリーマート|セブン|ローソン|コンビニ|NewDays|ニューデイズ|カルディ|成城石井|OK|ライフ|きゅうり|チーズ|^パン$|^水$|お茶|爽健美茶|コーラ|ポテチ|ビール|レッドブル|ジャスミン茶|アイス|野菜|果物|肉|卵|牛乳|豆腐|お菓子|グミ|じゃがりこ|綾鷹|炭酸水|コーン茶|^のり$|お米|めんつゆ|ジュース|飲み物|おにぎり/i],
+  ["eat",     /マック|マクドナルド|モス|バーガー|ケンタッキー|チキン|CoCo壱|カレー|日高屋|大戸屋|松屋|すき家|吉野家|牛丼|うどん|そば|ラーメン|つけ麺|油そば|蒙古|味仙|麻辣|火鍋|中華|餃子|居酒屋|トリキ|磯丸|赤から|水炊き|焼肉|焼き鳥|焼鳥|寿司|スシロー|サイゼ|ガスト|五右衛門|パスタ|ピザ|ドミノ|とんかつ|ステーキ|オムライス|沖縄料理|ランチ|ディナー|朝食|ご飯|飲み会|ビストロ|食堂|レストラン|銀だこ|くず餅|ウーバーイーツ|menu|出前館|デリバリー|^ばん$|ふたご|春日亭|一風堂|ウェンディーズ|屋台|お昼|蟹|喫茶店ランチ|まるきん|みんみん|しんぱち/i]
+  ,["other",   /^サン$|^クローク$|^ロッカー$|チャージスポット|結婚式/]
+];
+const autoCat = t => { t = String(t || ""); for(const [id, re] of CATRULES) if(re.test(t)) return id; return ""; };
+const autoCatId = t => { const id = autoCat(t); return id && CATS.some(c => c.id === id) ? id : ""; };
 function guessCat(title){
   if(!title) return "";
   const hit = sorted(S.entries).find(e => e.title === title && e.category);
-  return hit ? hit.category : "";
+  return hit ? hit.category : autoCatId(title);
 }
 const sorted = arr => [...arr].sort((x,y) => (y.date||"").localeCompare(x.date||"") || (y.createdAt||0) - (x.createdAt||0));
 
@@ -704,16 +725,22 @@ function listBodyHTML(){
   if(S.cat) items = items.filter(e => catOf(e.category).id === S.cat && !(e.type === "loan" && !e.category));
   const q = S.q.trim();
   if(q) items = items.filter(e => (e.title||"").includes(q) || name(e.payer).includes(q) || (e.category && catOf(e.category).label.includes(q)) || String(e.amount).includes(q.replace(/[¥,]/g,"")));
+  const total = items.length;
+  const allGroups = new Map();   // 月ごとの合計は、表示件数に関係なく全件で計算する
+  for(const e of items){ const k = ym(e.date); if(!allGroups.has(k)) allGroups.set(k, []); allGroups.get(k).push(e); }
+  items = items.slice(0, S.limit);                       // 件数が多いときは、新しい順に一部だけ描画（速さのため）
   const groups = new Map();
   for(const e of items){ const k = ym(e.date); if(!groups.has(k)) groups.set(k, []); groups.get(k).push(e); }
   let body = "";
   for(const [k, arr] of groups){
-    const ta = arr.filter(e => e.payer==="a" && e.type!=="loan").reduce((s,e) => s+e.amount, 0);
-    const tb = arr.filter(e => e.payer==="b" && e.type!=="loan").reduce((s,e) => s+e.amount, 0);
+    const full = allGroups.get(k) || arr;
+    const ta = full.filter(e => e.payer==="a" && e.type!=="loan").reduce((s,e) => s+e.amount, 0);
+    const tb = full.filter(e => e.payer==="b" && e.type!=="loan").reduce((s,e) => s+e.amount, 0);
     body += `<section><div class="monthhead"><b>${k.slice(0,4)}年${+k.slice(5)}月</b><span class="num">${esc(S.settings.nameA)} ${yen(ta)} ・ ${esc(S.settings.nameB)} ${yen(tb)}</span>${k < thisM ? `<button class="mini" data-recap="${k}">振り返り</button>` : ""}</div>
       <div class="list">${arr.map(rowEntry).join("")}</div></section>`;
   }
   if(!body) body = `<div class="list"><div class="empty">${q ? "見つかりませんでした" : "この期間の記録はありません"}</div></div>`;
+  if(total > items.length) body += `<button type="button" class="btn" data-more style="width:100%;margin-top:12px">さらに表示（残り${(total - items.length).toLocaleString("ja-JP")}件）</button>`;
   return body;
 }
 function viewList(){
@@ -755,6 +782,10 @@ function viewSettings(){
     <p class="hint">相手の新しい記録の数を、ホーム画面のアイコンに出します。アプリを開いたときや更新したときに反映されます。ホーム画面に追加したアプリで使えます。</p></section>
   <section class="field"><span class="flabel">カテゴリ</span>
     <button class="btn" data-do="cats" style="width:100%">カテゴリを追加・編集・削除（${CATS.length}個）</button></section>
+  <section class="field"><span class="flabel">データ</span>
+    <button class="btn" data-do="import" style="width:100%">CSVから取り込む（前のアプリなど）</button>
+    <button class="btn" data-do="autocat" style="width:100%;margin-top:8px">未分類の記録を、自動で分類する</button>
+    <p class="hint">「件名・立て替え者・金額・立て替え日」の4列のCSVを、まとめて取り込めます。同じファイルを2回取り込んでも、二重には増えません。</p></section>
   <button class="btn" data-do="guide">使い方を見る</button>
   <button class="btn" data-do="csv" style="margin-top:8px">CSVで保存する</button>`;
 }
@@ -1041,6 +1072,170 @@ function catEditor(){
   });
 }
 
+/* ================= CSVの取り込み ================= */
+function parseCsv(text){
+  text = String(text).replace(/^﻿+/, "");
+  const rows = []; let row = [], cur = "", q = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(q){ if(c === '"'){ if(text[i + 1] === '"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+    else if(c === '"') q = true;
+    else if(c === ","){ row.push(cur); cur = ""; }
+    else if(c === "\n" || c === "\r"){ if(c === "\r" && text[i + 1] === "\n") i++; row.push(cur); cur = ""; if(row.some(x => x !== "")) rows.push(row); row = []; }
+    else cur += c;
+  }
+  row.push(cur); if(row.some(x => x !== "")) rows.push(row);
+  return rows;
+}
+function parseOldCsv(text){
+  const rows = parseCsv(text), names = { [S.settings.nameA]: "a", [S.settings.nameB]: "b" };
+  const out = { items: [], bad: [], unknown: new Set() };
+  rows.forEach((r, i) => {
+    if(i === 0 && /件名/.test(r[0] || "")) return;
+    if(r.length < 4){ out.bad.push(r.join(",")); return; }
+    const [payer, amt, date] = r.slice(-3), title = r.slice(0, -3).join(",").trim();   // 件名にカンマが入っていても読めるように
+    const amount = Math.round(Number(String(amt).replace(/[,\s¥円]/g, "")));
+    const m = /^(\d{4})\D+(\d{1,2})\D+(\d{1,2})/.exec(String(date).trim());
+    if(!(amount > 0) || !m){ out.bad.push(r.join(",")); return; }
+    const ymd = `${m[1]}-${String(m[2]).padStart(2, "0")}-${String(m[3]).padStart(2, "0")}`;
+    const mv = /^(.+?)\s*から\s*(.+)$/.exec(payer.trim());
+    if(mv){ const f = names[mv[1].trim()], t = names[mv[2].trim()]; if(!f || !t || f === t){ out.unknown.add(payer.trim()); return; } out.items.push({ title, amount, date: ymd, settle: true, who: f }); return; }
+    const w = names[payer.trim()]; if(!w){ out.unknown.add(payer.trim()); return; }
+    out.items.push({ title, amount, date: ymd, settle: false, who: w });
+  });
+  return out;
+}
+const fnv = str => { let h = 0x811c9dc5; for(const c of str){ h ^= c.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
+const PAYWORD = /^(返金|返済|振込|送金)/;
+function buildImport(items, opt){
+  const entries = [], settlements = [], seen = new Map();
+  for(const r of items){
+    const asSettle = r.settle || (opt.pay && PAYWORD.test(r.title));
+    const key = [asSettle ? "s" : "e", r.title, r.who, r.amount, r.date].join("|");
+    const n = (seen.get(key) || 0) + 1; seen.set(key, n);
+    const id = "imp" + fnv(key) + "x" + n, createdAt = Date.parse(r.date + "T12:00:00+09:00") || 0;
+    if(asSettle) settlements.push({ id, from: r.who, to: other(r.who), amount: r.amount, date: r.date, note: r.title === "精算" ? "" : r.title.slice(0, 40), createdAt, by: r.who });
+    else entries.push({ id, type: "expense", payer: r.who, title: r.title.slice(0, 40), amount: r.amount, date: r.date, share: opt.share, createdAt, updatedAt: createdAt, by: r.who, reactions: {}, category: opt.cat ? autoCatId(r.title) : "" });
+  }
+  return { entries, settlements };
+}
+function importSheet(){
+  const st = { items: null, bad: [], unknown: [], pay: true, share: 1, cat: true, busy: false, fileName: "" };
+  const have = new Set([...S.entries, ...S.settlements].map(x => x.id));
+  const calc = () => {
+    const b = buildImport(st.items, { pay: st.pay, share: st.share, cat: st.cat });
+    const ne = b.entries.filter(x => !have.has(x.id)), ns = b.settlements.filter(x => !have.has(x.id));
+    const credit = S.entries.reduce((c, e) => c + entryCredit(e), 0) + S.settlements.reduce((c, x) => c + settleCredit(x), 0)
+      + ne.reduce((c, e) => c + entryCredit(e), 0) + ns.reduce((c, x) => c + settleCredit(x), 0);
+    const dates = st.items.map(x => x.date).sort();
+    return { b, ne, ns, credit: Math.round(credit), from: dates[0], to: dates[dates.length - 1] };
+  };
+  const html = () => {
+    if(!st.items) return `
+      <div class="shead"><button class="link" data-close>閉じる</button><h3>CSVから取り込む</h3><span></span></div>
+      <p class="hint" style="margin:0">「件名,立て替え者,金額,立て替え日」の4列のCSVを選んでください。「もえ から しゅん」のような行は、返済として取り込みます。</p>
+      <label class="btn primary press" style="text-align:center;cursor:pointer">CSVファイルを選ぶ<input id="imp-file" type="file" accept=".csv,text/csv,text/plain,.txt" hidden></label>
+      ${st.err ? `<div class="banner" role="alert">${esc(st.err)}</div>` : ""}`;
+    const c = calc(), nameOf = k => S.settings["name" + k.toUpperCase()];
+    const dir = c.credit === 0 ? "貸し借りなし" : `${nameOf(c.credit > 0 ? "b" : "a")} → ${nameOf(c.credit > 0 ? "a" : "b")}　${yen(c.credit)}`;
+    const payN = st.items.filter(x => !x.settle && PAYWORD.test(x.title)).length;
+    return `
+      <div class="shead"><button class="link" data-close>閉じる</button><h3>取り込みの確認</h3><span></span></div>
+      <div class="form"><div class="frow"><label>ファイル</label><span style="min-width:0;overflow-wrap:anywhere;text-align:right">${esc(st.fileName)}</span></div>
+        <div class="frow"><label>立て替え</label><b class="num">${c.ne.length.toLocaleString("ja-JP")}件</b></div>
+        <div class="frow"><label>返済</label><b class="num">${c.ns.length.toLocaleString("ja-JP")}件</b></div>
+        <div class="frow"><label>期間</label><span class="num">${esc(c.from)} 〜 ${esc(c.to)}</span></div>
+        ${st.items.length - c.ne.length - c.ns.length ? `<div class="frow"><label>取り込み済み</label><span class="num">${(st.items.length - c.ne.length - c.ns.length).toLocaleString("ja-JP")}件（スキップ）</span></div>` : ""}
+        ${st.bad.length ? `<div class="frow"><label>読めなかった行</label><span class="num" style="color:var(--danger)">${st.bad.length}件</span></div>` : ""}</div>
+      <span class="flabel">金額の扱い</span>
+      <div class="seg"><button type="button" data-imp-share="1" aria-pressed="${st.share === 1}">全額が相手の負担</button><button type="button" data-imp-share="0.5" aria-pressed="${st.share === 0.5}">割り勘（半分）</button></div>
+      ${payN ? `<span class="flabel">「返金・返済・振込・送金」の件名（${payN}件）</span>
+      <div class="seg"><button type="button" data-imp-pay="1" aria-pressed="${st.pay}">返済として取り込む</button><button type="button" data-imp-pay="0" aria-pressed="${!st.pay}">立て替えのまま</button></div>` : ""}
+      <span class="flabel">カテゴリ（${c.ne.filter(x => x.category).length.toLocaleString("ja-JP")}件を分類できます）</span>
+      <div class="seg"><button type="button" data-imp-cat="1" aria-pressed="${st.cat}">件名から自動で付ける</button><button type="button" data-imp-cat="0" aria-pressed="${!st.cat}">付けない</button></div>
+      <div class="banner"><b>取り込み後の貸し借り</b><br><span class="num" style="font-size:17px;font-weight:800">${esc(dir)}</span><br><span class="hint" style="margin:0">前のアプリの残高と合っているか確認してください。違うときは、上の2つを切り替えます。</span></div>
+      ${st.err ? `<div class="banner" role="alert">${esc(st.err)}</div>` : ""}
+      <button type="button" class="btn primary press" id="imp-go" ${st.busy || !(c.ne.length + c.ns.length) ? "disabled" : ""}>${st.busy ? esc(st.prog || "取り込み中…") : c.ne.length + c.ns.length ? `${(c.ne.length + c.ns.length).toLocaleString("ja-JP")}件を取り込む` : "取り込むものがありません"}</button>`;
+  };
+  openSheet(html(), "", sheet => {
+    const inner = $(".in", sheet), grab = '<div class="grab"></div>';
+    const show = () => { inner.innerHTML = grab + html(); };
+    sheet.addEventListener("change", async ev => {
+      if(ev.target.id !== "imp-file") return;
+      const f = ev.target.files && ev.target.files[0]; if(!f) return;
+      try{
+        const r = parseOldCsv(await f.text());
+        st.fileName = f.name; st.bad = r.bad; st.err = "";
+        if(r.unknown.size){ st.err = `CSVの名前（${[...r.unknown].join("、")}）が、設定の名前（${S.settings.nameA}・${S.settings.nameB}）と合いません。設定で名前をそろえてください。`; st.items = null; }
+        else if(!r.items.length){ st.err = "取り込める行が見つかりませんでした。"; st.items = null; }
+        else st.items = r.items;
+      }catch{ st.err = "ファイルを読み込めませんでした。"; st.items = null; }
+      show();
+    });
+    sheet.addEventListener("click", async ev => {
+      const sh = ev.target.closest("[data-imp-share]"); if(sh){ st.share = +sh.dataset.impShare; show(); return; }
+      const ca = ev.target.closest("[data-imp-cat]"); if(ca){ st.cat = ca.dataset.impCat === "1"; show(); return; }
+      const pa = ev.target.closest("[data-imp-pay]"); if(pa){ st.pay = pa.dataset.impPay === "1"; show(); return; }
+      if(!ev.target.closest("#imp-go") || st.busy) return;
+      const c = calc(); const total = c.ne.length + c.ns.length; if(!total) return;
+      st.busy = true; st.err = ""; show();
+      try{
+        const CH = 300; let done = 0;
+        const jobs = [...c.ne.map(x => ["entries", x]), ...c.ns.map(x => ["settlements", x])];
+        for(let i = 0; i < jobs.length; i += CH){
+          const part = jobs.slice(i, i + CH);
+          await api("importBulk", { entries: part.filter(j => j[0] === "entries").map(j => j[1]), settlements: part.filter(j => j[0] === "settlements").map(j => j[1]) });
+          done += part.length; st.prog = `取り込み中… ${done.toLocaleString("ja-JP")} / ${total.toLocaleString("ja-JP")}`; show();
+        }
+        closeSheet(); toast(`${total.toLocaleString("ja-JP")}件を取り込みました`); load();
+      }catch(err){
+        st.busy = false;
+        const m = String(err && err.message || err);
+        st.err = /UNKNOWN_FN/.test(m) ? "GAS（Code.gs）が古いままです。新しい Code.gs に更新して、再デプロイしてください。" : err && err.network ? "電波がつながっていません。つながる場所で、もう一度試してください。" : "取り込みに失敗しました。もう一度試してください。（" + m.slice(0, 80) + "）";
+        show();
+      }
+    });
+  });
+}
+
+/* ================= 未分類を自動で分類 ================= */
+function autoCatSheet(){
+  const plan = S.entries.filter(e => !e.category).map(e => ({ id: e.id, category: autoCatId(e.title) })).filter(x => x.category);
+  const unclassified = S.entries.filter(e => !e.category).length;
+  const by = new Map(); plan.forEach(x => by.set(x.category, (by.get(x.category) || 0) + 1));
+  const rows = [...by.entries()].sort((a, b) => b[1] - a[1]);
+  const st = { busy: false, err: "", prog: "" };
+  const html = () => `
+    <div class="shead"><button class="link" data-close>閉じる</button><h3>未分類を自動で分類</h3><span></span></div>
+    <p class="hint" style="margin:0">件名から、カテゴリを推測して付けます。すでにカテゴリがある記録は、変えません。</p>
+    <div class="form"><div class="frow"><label>未分類</label><b class="num">${unclassified.toLocaleString("ja-JP")}件</b></div>
+      <div class="frow"><label>分類できる</label><b class="num">${plan.length.toLocaleString("ja-JP")}件</b></div>
+      <div class="frow"><label>分類できない</label><span class="num">${(unclassified - plan.length).toLocaleString("ja-JP")}件（そのまま）</span></div></div>
+    ${rows.length ? `<div class="list">${rows.map(([id, n]) => `<div class="ce-row" style="cursor:default"><span class="em">${esc(catOf(id).icon)}</span>${esc(catOf(id).label)}<span class="chev num">${n.toLocaleString("ja-JP")}件</span></div>`).join("")}</div>` : ""}
+    ${st.err ? `<div class="banner" role="alert">${esc(st.err)}</div>` : ""}
+    <button type="button" class="btn primary press" id="ac-go" ${st.busy || !plan.length ? "disabled" : ""}>${st.busy ? esc(st.prog || "分類中…") : plan.length ? `${plan.length.toLocaleString("ja-JP")}件を分類する` : "分類できるものがありません"}</button>`;
+  openSheet(html(), "", sheet => {
+    const inner = $(".in", sheet), grab = '<div class="grab"></div>';
+    const show = () => { inner.innerHTML = grab + html(); };
+    sheet.addEventListener("click", async ev => {
+      if(!ev.target.closest("#ac-go") || st.busy || !plan.length) return;
+      st.busy = true; st.err = ""; show();
+      try{
+        let done = 0;
+        for(let i = 0; i < plan.length; i += 500){
+          await api("setCategories", { items: plan.slice(i, i + 500) });
+          done = Math.min(plan.length, i + 500); st.prog = `分類中… ${done.toLocaleString("ja-JP")} / ${plan.length.toLocaleString("ja-JP")}`; show();
+        }
+        closeSheet(); toast(`${plan.length.toLocaleString("ja-JP")}件を分類しました`); load();
+      }catch(err){
+        st.busy = false; const m = String(err && err.message || err);
+        st.err = /UNKNOWN_FN/.test(m) ? "GAS（Code.gs）が古いままです。新しい Code.gs に更新して、再デプロイしてください。" : err && err.network ? "電波がつながっていません。つながる場所で、もう一度試してください。" : "分類に失敗しました。もう一度試してください。（" + m.slice(0, 80) + "）";
+        show();
+      }
+    });
+  });
+}
+
 /* ================= 精算の完了演出 ================= */
 const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p); }catch{} };
 function settleDone(doc, prev){
@@ -1198,13 +1393,14 @@ document.addEventListener("click", ev => {
   const tab = t.closest("[data-tab]"); if(tab) return goTab(tab.dataset.tab);
   if(t.closest("[data-refresh]") && !$("#layer").innerHTML) return refresh();
   const th = t.closest("[data-theme-set]"); if(th){ ls.set("theme", th.dataset.themeSet); applyTheme(th.dataset.themeSet); render(); return; }
-  const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else exportCsv(); return; }
+  const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else if(k === "import") importSheet(); else if(k === "autocat") autoCatSheet(); else exportCsv(); return; }
   const rc = t.closest("[data-recap]"); if(rc) return recapSheet(rc.dataset.recap);
   if($("#layer").innerHTML) return;
   const ed = t.closest("[data-edit]"); if(ed){ const e = S.entries.find(x => x.id === ed.dataset.edit); if(e) entrySheet(e); return; }
   const se = t.closest("[data-settle]"); if(se){ const s = S.settlements.find(x => x.id === se.dataset.settle); if(s) settleSheet(s); return; }
-  const fl = t.closest("[data-filter]"); if(fl){ S.filter = fl.dataset.filter; render(); return; }
-  const cg = t.closest("[data-catgo]"); if(cg){ S.cat = cg.dataset.catgo; S.filter = cg.dataset.month === ym(today()) ? "this" : "all"; S.q = ""; return goTab("list"); }
+  const fl = t.closest("[data-filter]"); if(fl){ S.filter = fl.dataset.filter; S.limit = 300; render(); return; }
+  if(t.closest("[data-more]")){ S.limit += 300; const lb = $("#listbody"); if(lb) lb.innerHTML = listBodyHTML(); return; }
+  const cg = t.closest("[data-catgo]"); if(cg){ S.limit = 300; S.cat = cg.dataset.catgo; S.filter = cg.dataset.month === ym(today()) ? "this" : "all"; S.q = ""; return goTab("list"); }
   if(t.closest("[data-catclear]")){ S.cat = ""; render(); return; }
   const m = t.closest("[data-me]"); if(m){ S.me = m.dataset.me; ls.set("me", S.me); render(); return; }
   const ds = t.closest("[data-defshare]"); if(ds) saveSettings({ defaultShare: +ds.dataset.defshare });
@@ -1251,7 +1447,7 @@ document.addEventListener("click", ev => { if(Date.now() - lastSwipe < 350){ ev.
 })();
 document.addEventListener("compositionend", ev => { if(ev.target.id === "q") ev.target.dispatchEvent(new Event("input", { bubbles: true })); });
 document.addEventListener("input", ev => {
-  if(ev.target.id === "q" && !ev.isComposing){ S.q = ev.target.value; const lb = $("#listbody"); if(lb) lb.innerHTML = listBodyHTML(); }
+  if(ev.target.id === "q" && !ev.isComposing){ S.q = ev.target.value; S.limit = 300; const lb = $("#listbody"); if(lb) lb.innerHTML = listBodyHTML(); }
 });
 document.addEventListener("change", ev => {
   if(ev.target.id === "nA" || ev.target.id === "nB"){
