@@ -87,7 +87,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 
 /* ---------- Activity / status ---------- */
 .activity{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:16px;padding:11px 14px;border:0;width:100%;text-align:left;font-size:14px}
-.activity .txt{min-width:0;flex:1}
+.activity .txt{min-width:0;flex:1;overflow-wrap:anywhere}
 .activity .when{color:var(--muted);font-size:12px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;display:inline-block}
 .head{display:flex;align-items:center;justify-content:space-between;margin-right:-6px}
@@ -180,7 +180,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .catlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .catlist button{width:100%;display:grid;grid-template-columns:12px 1fr auto auto;gap:10px;align-items:center;border:0;background:none;padding:8px 0;border-top:1px solid var(--line);text-align:left;font-size:14px}
 .catlist li:first-child button{border-top:0}
-.catlist .sw{width:12px;height:12px;border-radius:4px}
+.catlist .csw{width:12px;height:12px;border-radius:4px}
 .catlist .cnt{font-size:12px;color:var(--muted)}
 .catlist .pct{font-family:var(--numf);font-weight:800;min-width:3.2em;text-align:right}
 .catlist .amt{font-family:var(--numf);font-weight:700;color:var(--muted);font-size:13px;min-width:5.5em;text-align:right}
@@ -255,7 +255,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .sw .sa.edit{background:var(--accent);color:var(--accentInk);justify-content:flex-start}
 .sw .sa.del{background:var(--danger);color:var(--onTint);justify-content:flex-end}
 .sw[data-dir="r"] .sa.edit,.sw[data-dir="l"] .sa.del{display:flex}
-.sw.go .act span{transform:scale(1.18)}
+.sw.go .sa span{transform:scale(1.18)}
 /* 精算完了・使い方ガイド */
 .ov{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .ovcard{position:relative;background:var(--surface);border-radius:28px;width:100%;max-width:360px;padding:28px 22px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -263,7 +263,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .ovcard h2{font-size:20px;letter-spacing:0;color:var(--fg);font-weight:800;margin:0}
 .ovcard p{margin:0;color:var(--muted);font-size:14px}
 .ovcard .btn{width:100%}
-.ovcard .btn.primary{background:var(--a);color:#fff}
+.ovcard .btn.primary{background:var(--a);color:var(--onTint)}
 .done-amt{font:800 40px var(--numf);font-variant-numeric:tabular-nums;min-height:52px}
 .done-amt small{font-size:20px;margin-right:2px;color:var(--muted)}
 .done-ring{width:72px;height:72px}
@@ -279,7 +279,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .gskip{position:absolute;right:16px;top:14px;border:0;background:none;color:var(--muted);font-weight:700;font-size:13px;padding:6px}
 .gart{height:110px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
 .gart .pill{border-radius:14px;padding:10px 14px;font-weight:800;font-size:14px;background:var(--surface2)}
-.gart .pill.a{background:var(--a);color:#fff}.gart .pill.b{background:var(--b);color:#fff}
+.gart .pill.a{background:var(--a);color:var(--onTint)}.gart .pill.b{background:var(--b);color:var(--onTint)}
 .gart .big{font:800 34px var(--numf)}
 .gdots{display:flex;gap:6px}.gdots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.gdots i.on{background:var(--a);width:20px;border-radius:4px}
 .gslide{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:236px}
@@ -385,7 +385,12 @@ const DEFAULT_CATS = [
   { id:"other", icon:"📦", label:"その他" }
 ];
 let CATS = DEFAULT_CATS;
-const applyCats = () => { const c = S.settings && S.settings.cats; CATS = Array.isArray(c) && c.length ? c : DEFAULT_CATS; };
+const cleanTxt = (v, n) => Array.from(String(v == null ? "" : v).replace(/[<>&"'`\\]/g, "")).slice(0, n).join("").trim();
+const applyCats = () => {
+  const c = S.settings && S.settings.cats;
+  const list = Array.isArray(c) ? c.filter(x => x && /^[a-z]{1,20}$/.test(String(x.id))).map(x => ({ id: String(x.id), icon: cleanTxt(x.icon, 6) || "🏷", label: cleanTxt(x.label, 10), ...(x.col != null ? { col: Math.max(0, Math.min(7, Math.floor(Number(x.col)) || 0)) } : {}) })).filter(x => x.label) : [];
+  CATS = list.length ? list : DEFAULT_CATS;
+};
 const NONE = { id:"none", icon:"", label:"未分類" };
 const catOf = id => CATS.find(c => c.id === id) || NONE;
 const catColor = id => { const c = catOf(id); return c.col != null ? `var(--c-p${c.col})` : `var(--c-${c.id})`; };
@@ -425,18 +430,23 @@ let flushing = false;
 async function flush(){
   if(flushing || !Q.length) return;
   flushing = true;
-  let last = null;
+  let last = null, dropped = false;
   while(Q.length){
     try{ last = await api(Q[0].fn, ...Q[0].args); Q.shift(); saveQ(); S.offline = false; }
     catch(err){
       if(err.network){ S.offline = true; break; }
       const m = String(err.message);
       if(/BAD_PASS|LOCKED|SETUP_PASSCODE|BAD_RESPONSE/.test(m)){ flushing = false; return handleErr(err); } // 送信待ちは消さずに残す
-      Q.shift(); saveQ(); toast("保存できなかった記録が1件あります。もう一度登録してください");
+      if(/金額|払った人|リアクション|使えない|UNKNOWN_FN/.test(m)){ Q.shift(); saveQ(); dropped = true; toast("保存できなかった記録が1件あります。もう一度登録してください"); continue; }
+      // サーバーが一時的に忙しいだけの可能性が高い：残して、あとでもう一度送る（5回までがんばる）
+      Q[0].tries = (Q[0].tries || 0) + 1;
+      if(Q[0].tries >= 5){ Q.shift(); dropped = true; toast("保存できなかった記録が1件あります。もう一度登録してください"); }
+      saveQ(); break;
     }
   }
   flushing = false;
-  if(!Q.length && last) apply(last); else renderStatus();
+  if(dropped) setTimeout(load, 0);
+  else if(!Q.length && last) apply(last); else renderStatus();
 }
 function apply(d){
   if(!d || Q.length) return;
@@ -446,7 +456,7 @@ function apply(d){
   S.ready = true; S.err = ""; S.locked = false; S.synced = Date.now(); S.offline = false; cache();
   const f = document.activeElement && document.activeElement.id;
   if(f !== "q" && f !== "nA" && f !== "nB") render();
-  updateBadge();
+  updateBadge(); maybeGuide();
 }
 async function toggleBadge(){
   if(ls.get("badge", "") === "1"){ ls.set("badge", ""); try{ navigator.clearAppBadge && navigator.clearAppBadge(); }catch{} render(); toast("バッジをオフにしました"); return; }
@@ -657,7 +667,7 @@ function catSectionHTML(m){
   return `<section><h2>${+m.slice(5)}月のカテゴリ</h2><div class="catcard">
     <div class="catbar" role="img" aria-label="${rows.map(r => `${catOf(r.id).label} ${pct(r.sum)}%`).join("、")}">${rows.map(r => `<i style="width:${r.sum/total*100}%;background:${catColor(r.id)}"></i>`).join("")}</div>
     <ul class="catlist">${rows.slice(0, 5).map(r => { const c = catOf(r.id); return `<li><button class="press" data-catgo="${r.id}" data-month="${m}">
-      <span class="sw" style="background:${catColor(r.id)}"></span>
+      <span class="csw" style="background:${catColor(r.id)}"></span>
       <span><span class="ce">${c.icon}</span> ${esc(c.label)} <span class="cnt">${r.n}件</span></span>
       <span class="amt">${yen(r.sum)}</span><span class="pct">${pct(r.sum)}%</span></button></li>`; }).join("")}</ul>
     ${rows.length > 5 ? `<div class="more"><span>ほか${rows.length - 5}カテゴリ</span></div>` : ""}
@@ -764,6 +774,7 @@ function viewLock(){
 /* ================= シート ================= */
 function closeSheet(){ $("#layer").innerHTML = ""; document.body.classList.remove("noscroll"); }
 function openSheet(html, attrs, onMount){
+  document.querySelectorAll(".toast").forEach(t => t.remove()); // キーパッドに重ならないように
   document.body.classList.add("noscroll");
   $("#layer").innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" ${attrs}><div class="in"><div class="grab"></div>${html}</div></div>`;
   onMount && onMount($("#layer .sheet"));
@@ -882,7 +893,8 @@ function entrySheet(e, forceType){
     $("#f-title", sheet).addEventListener("keydown", ev => { if(ev.key === "Enter"){ ev.preventDefault(); ev.target.blur(); } });
     save.addEventListener("click", () => {
       const v = exprValue(st.expr); if(!(v > 0)) return;
-      const doc = { ...(e || {}), type, payer: st.payer, title: $("#f-title", sheet).value.trim(), amount: v, date: st.date, updatedAt: Date.now() };
+      const cur = (e && S.entries.find(x => x.id === e.id)) || e;
+      const doc = { ...(cur || {}), type, payer: st.payer, title: $("#f-title", sheet).value.trim(), amount: v, date: st.date, updatedAt: Date.now() };
       if(loan) delete doc.share; else doc.share = st.share;
       doc.category = st.cat;
       if(isNew){ doc.id = uid(); doc.createdAt = Date.now(); doc.by = me(); doc.reactions = {}; }
@@ -921,7 +933,7 @@ function toggleReaction(e, r){
   const next = ((e.reactions || {})[who] === r) ? "" : r;
   const reactions = { ...(e.reactions || {}) };
   if(next) reactions[who] = next; else delete reactions[who];
-  const doc = { ...e, reactions };
+  const doc = { ...(S.entries.find(x => x.id === e.id) || e), reactions };
   upsertLocal("entries", doc); render();
   enqueue("setReaction", [e.id, who, next]);
   return doc;
@@ -1000,7 +1012,7 @@ function catEditor(){
       if(t.closest("[data-ce-back]")){ ce.mode = "list"; show(); return; }
       const em = t.closest("[data-em]"); if(em){ ce.icon = em.dataset.em; $("#ce-prev", sheet).textContent = ce.icon; $("#ce-em", sheet).value = ""; $$("#ce-grid button", sheet).forEach(b => b.setAttribute("aria-pressed", b === em)); return; }
       if(t.closest("[data-ce-save]")){
-        const name = ($("#ce-name", sheet).value || "").trim().slice(0, 10);
+        const name = cleanTxt($("#ce-name", sheet).value, 10);
         if(!name){ toast("名前を入力してください"); return; }
         const list = cats();
         if(list.some(c => c.label === name && c.id !== ce.id)){ toast("同じ名前のカテゴリがあります"); return; }
@@ -1076,7 +1088,7 @@ function guideSlides(){
   ];
 }
 function showGuide(){
-  if(document.querySelector(".ov")) return;
+  if(S.locked || document.querySelector(".ov")) return;
   const slides = guideSlides(); let i = 0;
   const o = document.createElement("div"); o.className = "ov";
   document.body.appendChild(o); document.body.classList.add("noscroll");
@@ -1157,11 +1169,11 @@ function toast(msg, undo){
 }
 function saveSettings(patch){
   Object.assign(S.settings, patch); applyCats(); cache(); render();
-  enqueue("saveSettings", [{ ...S.settings }]);
+  enqueue("saveSettings", [patch]); // 変えた項目だけ送る（古い内容で相手の設定を上書きしないため）
 }
 function markSeen(){ S.seenAt = Date.now(); ls.set("seenAt", String(S.seenAt)); }
 function exportCsv(){
-  const q = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
+  const q = v => { let t = String(v ?? ""); if(typeof v === "string" && /^[=+\-@]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
   const lines = [["種別","日付","件名","カテゴリ","払った人","金額","相手の負担","相手が負担する額","登録した人"].map(q).join(",")];
   for(const e of sorted(S.entries)) lines.push([e.type==="loan"?"貸し借り":"立て替え", e.date, e.title, e.category ? catOf(e.category).label : "", name(e.payer), e.amount, e.type==="loan"?"全額":(e.share===1?"全額":"半分"), Math.abs(entryCredit(e)), e.by ? name(e.by) : ""].map(q).join(","));
   for(const s of sorted(S.settlements)) lines.push(["精算", s.date, s.note || "返済", "", name(s.from), s.amount, "", "", s.by ? name(s.by) : ""].map(q).join(","));
@@ -1253,7 +1265,7 @@ document.addEventListener("submit", ev => {
   if(!S.me){ toast("あなたがどちらか選んでください"); return; }
   ls.set("me", S.me);
   S.pass = $("#pass").value.trim(); ls.set("pass", S.pass); S.err = "";
-  S.locked = false; S.ready = false; render(); load(); maybeGuide();
+  S.locked = false; S.ready = false; render(); load();
 });
 $("#fab").addEventListener("click", () => entrySheet(null));
 document.addEventListener("keydown", ev => { if(ev.key === "Escape" && $("#layer").innerHTML) closeSheet(); });
@@ -1262,10 +1274,10 @@ document.addEventListener("keydown", ev => { if(ev.key === "Escape" && $("#layer
 if(!S.pass || !S.me){ S.locked = true; S.ready = true; render(); }
 else {
   try{ const c = JSON.parse(ls.get("cache", "null")); if(c){ if(c.settings) Object.assign(S.settings, c.settings); applyCats(); S.entries = c.entries || []; S.settlements = c.settlements || []; S.ready = true; } }catch{}
-  render(); load(); maybeGuide();
+  render(); load();
 }
 if("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-window.addEventListener("online", () => { S.offline = false; flush(); load(); });
+window.addEventListener("online", () => { if(S.locked || !S.pass) return; S.offline = false; flush(); load(); });
 window.addEventListener("offline", () => { S.offline = true; renderStatus(); });
 document.addEventListener("visibilitychange", () => {
   if(document.hidden){ if(S.tab === "list") markSeen(); return; }
