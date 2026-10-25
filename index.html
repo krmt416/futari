@@ -46,6 +46,7 @@
   --onTint:#101211; --danger:#e57a66; --warn:#e0b44c; --c-eat:#eb9a4c; --c-cafe:#c08a66; --c-grocery:#73bf73; --c-daily:#62b4cc; --c-transport:#8a97e6; --c-leisure:#e07cb6; --c-home:#cdb352; --c-utility:#5cc2b6; --c-other:#a9a49c; --c-none:#4a4b4f; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 html,body{min-height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -252,7 +253,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 <body>
 
 <div class="app" id="app"></div>
-<nav class="tabs" aria-label="画面切替"><div class="in" id="tabs"></div></nav>
+<nav class="tabs" id="navbar" aria-label="画面切替"><div class="in" id="tabs"></div></nav>
 <button class="fab press" id="fab" aria-label="立て替えを登録"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <div id="layer"></div>
 
@@ -297,9 +298,10 @@ const S = {
   me: ls.get("me", ""), tab: "home",
   filter: "all", q: "", cat: "", ready: false, err: "", pass: ls.get("pass", ""), locked: false,
   synced: 0, offline: false,
-  seenAt: +ls.get("seenAt", "0") || Date.now(), dotSince: 0,
+  seenAt: +ls.get("seenAt", "0") || 0, dotSince: 0,
   heroDigits: ""
 };
+if(!S.seenAt){ S.seenAt = Date.now(); ls.set("seenAt", String(S.seenAt)); }
 S.dotSince = S.seenAt;
 const name = p => p === "a" ? S.settings.nameA : S.settings.nameB;
 const ini = p => (name(p) || "?").slice(0,1);
@@ -314,11 +316,12 @@ async function api(fn, ...args){
   let r;
   try{ r = await fetch(API_URL, { method: "POST", body: JSON.stringify({ fn, pass: S.pass, args }) }); }
   catch{ const e = new Error("NETWORK"); e.network = true; throw e; }
-  let j; try{ j = await r.json(); }catch{ const e = new Error("NETWORK"); e.network = true; throw e; }
+  let j; try{ j = await r.json(); }catch{ throw new Error("BAD_RESPONSE"); }
   if(j.error) throw new Error(j.error);
   return j.data;
 }
-function enqueue(fn, args){ Q.push({ fn, args }); saveQ(); renderStatus(); flush(); }
+let epoch = 0; // 保存操作のたびに増やす。古い getAll の結果で画面を巻き戻さないため
+function enqueue(fn, args){ epoch++; Q.push({ fn, args }); saveQ(); renderStatus(); flush(); }
 let flushing = false;
 async function flush(){
   if(flushing || !Q.length) return;
@@ -328,7 +331,8 @@ async function flush(){
     try{ last = await api(Q[0].fn, ...Q[0].args); Q.shift(); saveQ(); S.offline = false; }
     catch(err){
       if(err.network){ S.offline = true; break; }
-      if(String(err.message).includes("BAD_PASS")){ flushing = false; return handleErr(err); }
+      const m = String(err.message);
+      if(/BAD_PASS|LOCKED|SETUP_PASSCODE|BAD_RESPONSE/.test(m)){ flushing = false; return handleErr(err); } // 送信待ちは消さずに残す
       Q.shift(); saveQ(); toast("保存できなかった記録が1件あります。もう一度登録してください");
     }
   }
@@ -346,12 +350,18 @@ function apply(d){
 async function load(){
   if(!API_URL.startsWith("http")){ S.err = "index.html の API_URL に GAS のURLを設定してください。"; S.ready = true; render(); return; }
   if(Q.length) return flush();
-  try{ apply(await api("getAll")); }
+  const my = epoch;
+  try{ const d = await api("getAll"); if(my !== epoch) return; apply(d); }
   catch(err){ if(err.network){ S.offline = true; S.ready = true; renderStatus(); } else handleErr(err); }
 }
 function handleErr(err){
-  if(String(err && err.message || err).includes("BAD_PASS")){ S.locked = true; S.ready = true; ls.set("pass",""); S.pass = ""; closeSheet(); render(); return; }
-  S.err = "データを取得できませんでした。少し待って開き直してください。"; S.ready = true; render();
+  const m = String(err && err.message || err);
+  if(m.includes("BAD_PASS")){ S.locked = true; S.ready = true; ls.set("pass",""); S.pass = ""; S.err = "合言葉が違います。もう一度入力してください。"; closeSheet(); render(); return; }
+  if(m.includes("LOCKED")){ S.locked = true; S.ready = true; S.pass = ""; S.err = "合言葉の間違いが続いたため、10分ほど使えません。時間をおいて入力してください。"; closeSheet(); render(); return; }
+  if(m.includes("SETUP_PASSCODE")) S.err = "Code.gs の PASSCODE（8行目）をふたりの合言葉に書き換えて、GASを再デプロイしてください。";
+  else if(m.includes("BAD_RESPONSE")) S.err = "サーバーの応答が正しくありません。GASのデプロイで「アクセスできるユーザー：全員」になっているか、URLが正しいか確認してください。";
+  else S.err = "データを取得できませんでした。少し待って開き直してください。";
+  S.ready = true; render();
 }
 function cache(){ ls.set("cache", JSON.stringify({ settings: S.settings, entries: S.entries, settlements: S.settlements })); }
 function upsertLocal(key, doc){ const i = S[key].findIndex(x => x.id === doc.id); if(i >= 0) S[key][i] = doc; else S[key].push(doc); cache(); }
@@ -407,7 +417,7 @@ function keyInput(expr, k){
   if(lastNum.length >= 8) return expr;
   return expr + k;
 }
-const exprValue = expr => evalExpr(isOp(expr.slice(-1)) ? expr.slice(0,-1) : expr);
+const exprValue = expr => { const v = evalExpr(isOp(expr.slice(-1)) ? expr.slice(0,-1) : expr); return v > 999999999 ? NaN : v; };
 const exprPretty = expr => expr.replace(/\d+/g, d => (+d).toLocaleString("ja-JP")).replace(/([+−×÷])/g, " $1 ");
 
 /* ================= アイコン ================= */
@@ -430,6 +440,7 @@ function newFromPartner(){ return S.entries.filter(e => e.by && e.by === other(m
 function renderTabs(){
   const n = S.tab === "list" ? 0 : newFromPartner().length;
   const t = [["home","ホーム"],["list","立て替え"],["history","精算履歴"],["settings","設定"]];
+  $("#navbar").hidden = S.locked;
   $("#tabs").innerHTML = S.locked ? "" : t.map(([k,l]) => `<button class="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}>${I[k]}<span>${l}</span>${k==="list"&&n?`<span class="badge" aria-label="新着${n}件">${n}</span>`:""}</button>`).join("");
 }
 function statusHTML(){
@@ -554,7 +565,7 @@ function rowEntry(e){
   </button>`;
 }
 
-function viewList(){
+function listBodyHTML(){
   const thisM = ym(today()), lastM = prevMonth(thisM);
   let items = sorted(S.entries);
   if(S.filter === "this") items = items.filter(e => ym(e.date) === thisM);
@@ -564,7 +575,6 @@ function viewList(){
   if(q) items = items.filter(e => (e.title||"").includes(q) || name(e.payer).includes(q) || (e.category && catOf(e.category).label.includes(q)) || String(e.amount).includes(q.replace(/[¥,]/g,"")));
   const groups = new Map();
   for(const e of items){ const k = ym(e.date); if(!groups.has(k)) groups.set(k, []); groups.get(k).push(e); }
-  const chip = (k,l) => `<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`;
   let body = "";
   for(const [k, arr] of groups){
     const ta = arr.filter(e => e.payer==="a" && e.type!=="loan").reduce((s,e) => s+e.amount, 0);
@@ -573,10 +583,14 @@ function viewList(){
       <div class="list">${arr.map(rowEntry).join("")}</div></section>`;
   }
   if(!body) body = `<div class="list"><div class="empty">${q ? "見つかりませんでした" : "この期間の記録はありません"}</div></div>`;
+  return body;
+}
+function viewList(){
+  const chip = (k,l) => `<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`;
   return `<h1>立て替えリスト</h1>
     <div class="chips">${chip("all","すべて")}${chip("this","今月")}${chip("last","先月")}${S.cat ? `<button class="catfilter" data-catclear aria-label="カテゴリの絞り込みを解除">${catOf(S.cat).icon} ${esc(catOf(S.cat).label)} ✕</button>` : ""}</div>
     <input class="search" id="q" type="search" placeholder="件名・カテゴリ・名前・金額で検索" value="${esc(S.q)}" aria-label="検索">
-    ${body}`;
+    <div class="view" id="listbody">${listBodyHTML()}</div>`;
 }
 
 function viewHistory(){
@@ -609,6 +623,7 @@ function viewLock(){
   const pick = S.me || "";
   return `<form class="lock" id="lockform">
     <p class="brand">ふたりの立て替え帳</p>
+    ${S.err ? `<div class="banner" role="alert">${esc(S.err)}</div>` : ""}
     <div class="field"><span class="flabel">あなたは？</span>
       <div class="seg who2" id="lockwho"><button type="button" class="a" data-v="a" aria-pressed="${pick==="a"}">${esc(S.settings.nameA)}</button><button type="button" class="b" data-v="b" aria-pressed="${pick==="b"}">${esc(S.settings.nameB)}</button></div></div>
     <div class="field"><label class="flabel" for="pass">合言葉</label><input id="pass" type="password" autocomplete="current-password" required></div>
@@ -638,7 +653,7 @@ function bindKeypad(sheet, st, onChange){
   const press = key => { st.expr = keyInput(st.expr, key); onChange(); };
   let lpT = null, lpDone = false;
   sheet.addEventListener("click", ev => { const b = ev.target.closest("[data-key]"); if(!b) return; if(lpDone){ lpDone = false; return; } press(b.dataset.key); });
-  sheet.addEventListener("pointerdown", ev => { const b = ev.target.closest('[data-key="⌫"]'); if(!b) return; lpDone = false; lpT = setTimeout(() => { lpDone = true; press("C"); }, 500); });
+  sheet.addEventListener("pointerdown", ev => { lpDone = false; const b = ev.target.closest('[data-key="⌫"]'); if(!b) return; lpT = setTimeout(() => { lpDone = true; press("C"); }, 500); });
   ["pointerup","pointerleave","pointercancel"].forEach(t => sheet.addEventListener(t, () => clearTimeout(lpT)));
   sheet.addEventListener("contextmenu", ev => { if(ev.target.closest("[data-key]")) ev.preventDefault(); });
   sheet.addEventListener("keydown", ev => {
@@ -886,7 +901,7 @@ document.addEventListener("click", ev => {
 });
 document.addEventListener("compositionend", ev => { if(ev.target.id === "q") ev.target.dispatchEvent(new Event("input", { bubbles: true })); });
 document.addEventListener("input", ev => {
-  if(ev.target.id === "q" && !ev.isComposing){ S.q = ev.target.value; const pos = ev.target.selectionStart; render(); const q = $("#q"); q.focus(); try{ q.setSelectionRange(pos,pos); }catch{} }
+  if(ev.target.id === "q" && !ev.isComposing){ S.q = ev.target.value; const lb = $("#listbody"); if(lb) lb.innerHTML = listBodyHTML(); }
 });
 document.addEventListener("change", ev => {
   if(ev.target.id === "nA" || ev.target.id === "nB"){
@@ -899,7 +914,7 @@ document.addEventListener("submit", ev => {
   ev.preventDefault();
   if(!S.me){ toast("あなたがどちらか選んでください"); return; }
   ls.set("me", S.me);
-  S.pass = $("#pass").value.trim(); ls.set("pass", S.pass);
+  S.pass = $("#pass").value.trim(); ls.set("pass", S.pass); S.err = "";
   S.locked = false; S.ready = false; render(); load();
 });
 $("#fab").addEventListener("click", () => entrySheet(null));
@@ -911,6 +926,7 @@ else {
   try{ const c = JSON.parse(ls.get("cache", "null")); if(c){ if(c.settings) Object.assign(S.settings, c.settings); S.entries = c.entries || []; S.settlements = c.settlements || []; S.ready = true; } }catch{}
   render(); load();
 }
+if("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 window.addEventListener("online", () => { S.offline = false; flush(); load(); });
 window.addEventListener("offline", () => { S.offline = true; renderStatus(); });
 document.addEventListener("visibilitychange", () => {
