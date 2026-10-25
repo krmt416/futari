@@ -415,7 +415,7 @@ function handleErr(err){
   if(m.includes("LOCKED")){ S.locked = true; S.ready = true; S.pass = ""; S.err = "合言葉の間違いが続いたため、10分ほど使えません。時間をおいて入力してください。"; closeSheet(); render(); return; }
   if(m.includes("SETUP_PASSCODE")) S.err = "Code.gs の PASSCODE（8行目）をふたりの合言葉に書き換えて、GASを再デプロイしてください。";
   else if(m.includes("BAD_RESPONSE")) S.err = "サーバーの応答が正しくありません。GASのデプロイで「アクセスできるユーザー：全員」になっているか、URLが正しいか確認してください。";
-  else S.err = "データを取得できませんでした。少し待って開き直してください。";
+  else S.err = "データを取得できませんでした。少し待って開き直してください。（詳細：" + m.replace(/^Error:\s*/, "").slice(0, 140) + "）";
   S.ready = true; render();
 }
 function cache(){ ls.set("cache", JSON.stringify({ settings: S.settings, entries: S.entries, settlements: S.settlements })); }
