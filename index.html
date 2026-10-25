@@ -25,7 +25,7 @@
   --a:#2f7d68; --aSoft:#d7ebe4; --aBg:#e8f2ee;
   --b:#c0566b; --bSoft:#f5dde2; --bBg:#f8eaed;
   --onTint:#ffffff; --danger:#b3412f; --warn:#9a6a00;
-  --c-eat:#d9822b; --c-cafe:#8a5a3c; --c-grocery:#4f9a52; --c-daily:#3f8fa8; --c-transport:#5b6bbf; --c-leisure:#b9548f; --c-home:#a08a2e; --c-utility:#2f8f86; --c-medical:#c9534f; --c-beauty:#d46a9a; --c-clothes:#7a68b8; --c-telecom:#4a86c4; --c-travel:#2e9fb5; --c-gift:#c9892e; --c-other:#8c8780; --c-none:#cfc9bd;
+  --c-eat:#d9822b; --c-cafe:#8a5a3c; --c-grocery:#4f9a52; --c-daily:#3f8fa8; --c-transport:#5b6bbf; --c-leisure:#b9548f; --c-home:#a08a2e; --c-utility:#2f8f86; --c-medical:#c9534f; --c-beauty:#d46a9a; --c-clothes:#7a68b8; --c-telecom:#4a86c4; --c-travel:#2e9fb5; --c-gift:#c9892e; --c-p0:#d9822b; --c-p1:#4f9a52; --c-p2:#3f8fa8; --c-p3:#5b6bbf; --c-p4:#b9548f; --c-p5:#a08a2e; --c-p6:#2f8f86; --c-p7:#c9534f; --c-other:#8c8780; --c-none:#cfc9bd;
   --font:"Meiryo UI","Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;
   --numf:"Manrope","Zen Kaku Gothic New",system-ui,sans-serif;
   --spring:cubic-bezier(.2,.9,.25,1.15);
@@ -36,14 +36,14 @@
   --accent:#e0b44c; --accentInk:#1a1406; --accentSoft:#3a3020;
   --a:#5fbfa3; --aSoft:#1f3630; --aBg:#162320;
   --b:#e8899b; --bSoft:#3d252b; --bBg:#25191c;
-  --onTint:#101211; --danger:#e57a66; --warn:#e0b44c; --c-eat:#eb9a4c; --c-cafe:#c08a66; --c-grocery:#73bf73; --c-daily:#62b4cc; --c-transport:#8a97e6; --c-leisure:#e07cb6; --c-home:#cdb352; --c-utility:#5cc2b6; --c-medical:#e57f7a; --c-beauty:#ec8fb7; --c-clothes:#a493dc; --c-telecom:#79aee6; --c-travel:#62c4d6; --c-gift:#e6ab5c; --c-other:#a9a49c; --c-none:#4a4b4f; color-scheme:dark}}
+  --onTint:#101211; --danger:#e57a66; --warn:#e0b44c; --c-eat:#eb9a4c; --c-cafe:#c08a66; --c-grocery:#73bf73; --c-daily:#62b4cc; --c-transport:#8a97e6; --c-leisure:#e07cb6; --c-home:#cdb352; --c-utility:#5cc2b6; --c-medical:#e57f7a; --c-beauty:#ec8fb7; --c-clothes:#a493dc; --c-telecom:#79aee6; --c-travel:#62c4d6; --c-gift:#e6ab5c; --c-p0:#eb9a4c; --c-p1:#73bf73; --c-p2:#62b4cc; --c-p3:#8a97e6; --c-p4:#e07cb6; --c-p5:#cdb352; --c-p6:#5cc2b6; --c-p7:#e57f7a; --c-other:#a9a49c; --c-none:#4a4b4f; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#17181a; --surface:#222326; --surface2:#2c2d31; --line:#36373b;
   --fg:#efece6; --muted:#9b978f;
   --accent:#e0b44c; --accentInk:#1a1406; --accentSoft:#3a3020;
   --a:#5fbfa3; --aSoft:#1f3630; --aBg:#162320;
   --b:#e8899b; --bSoft:#3d252b; --bBg:#25191c;
-  --onTint:#101211; --danger:#e57a66; --warn:#e0b44c; --c-eat:#eb9a4c; --c-cafe:#c08a66; --c-grocery:#73bf73; --c-daily:#62b4cc; --c-transport:#8a97e6; --c-leisure:#e07cb6; --c-home:#cdb352; --c-utility:#5cc2b6; --c-medical:#e57f7a; --c-beauty:#ec8fb7; --c-clothes:#a493dc; --c-telecom:#79aee6; --c-travel:#62c4d6; --c-gift:#e6ab5c; --c-other:#a9a49c; --c-none:#4a4b4f; color-scheme:dark}
+  --onTint:#101211; --danger:#e57a66; --warn:#e0b44c; --c-eat:#eb9a4c; --c-cafe:#c08a66; --c-grocery:#73bf73; --c-daily:#62b4cc; --c-transport:#8a97e6; --c-leisure:#e07cb6; --c-home:#cdb352; --c-utility:#5cc2b6; --c-medical:#e57f7a; --c-beauty:#ec8fb7; --c-clothes:#a493dc; --c-telecom:#79aee6; --c-travel:#62c4d6; --c-gift:#e6ab5c; --c-p0:#eb9a4c; --c-p1:#73bf73; --c-p2:#62b4cc; --c-p3:#8a97e6; --c-p4:#e07cb6; --c-p5:#cdb352; --c-p6:#5cc2b6; --c-p7:#e57f7a; --c-other:#a9a49c; --c-none:#4a4b4f; color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -162,7 +162,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .sugg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:-4px -2px 0;padding:0 2px}
 .sugg::-webkit-scrollbar{display:none}
 .sugg button{flex:none;border:0;background:var(--tintSoft);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:700}
-.cats{display:flex;flex-wrap:wrap;gap:6px;margin:0 -2px;padding:2px}
+.cats{display:flex;flex-wrap:nowrap;gap:6px;margin:0 -2px;padding:2px;overflow:hidden}
 .cats::-webkit-scrollbar{display:none}
 .cats button{flex:none;border:1.5px solid transparent;background:var(--surface);border-radius:12px;padding:7px 11px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px;transition:border-color .2s,background-color .2s}
 .cats button[aria-pressed="true"]{border-color:var(--tint);background:var(--tintSoft)}
@@ -250,6 +250,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 /* 精算完了・使い方ガイド */
 .ov{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .ovcard{position:relative;background:var(--surface);border-radius:28px;width:100%;max-width:360px;padding:28px 22px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.ovcard{max-height:calc(100dvh - 48px);overflow-y:auto}
 .ovcard h2{font-size:20px;letter-spacing:0;color:var(--fg);font-weight:800;margin:0}
 .ovcard p{margin:0;color:var(--muted);font-size:14px}
 .ovcard .btn{width:100%}
@@ -273,7 +274,22 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .gart .big{font:800 34px var(--numf)}
 .gdots{display:flex;gap:6px}.gdots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.gdots i.on{background:var(--a);width:20px;border-radius:4px}
 .gslide{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:236px}
-.cats .more{color:var(--muted);background:transparent;border:1.5px dashed var(--line)}
+.cats .more{color:var(--fg);background:var(--surface2);margin-left:auto}
+.ce-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border:0;border-top:1px solid var(--line);background:none;width:100%;text-align:left;font-weight:700}
+.ce-row:first-child{border-top:0}
+.ce-row .em{font-size:22px;width:30px;text-align:center}
+.ce-row .chev{margin-left:auto;color:var(--muted)}
+.cename{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:18px;padding:8px 14px}
+.cename .prev{font-size:32px;width:44px;text-align:center}
+.cename input{flex:1;border:0;background:none;font-size:17px;font-weight:700;padding:10px 0;min-width:0;outline:none}
+.emojigrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.emojigrid button{aspect-ratio:1;border:1.5px solid transparent;border-radius:12px;background:var(--surface);font-size:21px;display:grid;place-items:center;padding:0}
+.emojigrid button[aria-pressed="true"]{border-color:var(--tint);background:var(--tintSoft)}
+.catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.catgrid button{border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 4px;font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.catgrid button span{font-size:22px;line-height:1}
+.catgrid button[aria-pressed="true"]{border-color:var(--a);background:var(--aSoft)}
+@media (max-height:720px){.key{height:44px}.amtview{min-height:62px}}
 @media (prefers-reduced-motion:no-preference){
   .ov{animation:fadein .2s ease}
   .ovcard{animation:cardin .45s var(--spring)}
@@ -312,6 +328,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 const API_URL = "https://script.google.com/macros/s/AKfycbxHhlWh5W_j2Q6VyiPD0_eUEmMN4fPudFTbt7OdOGoNnAtrX3PD2THZ1rq3nVzBpx6P4Q/exec";
 
 const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const comma = n => Math.round(Math.abs(n)).toLocaleString("ja-JP");
 const yen = n => "¥" + comma(n);
@@ -325,7 +342,7 @@ const prevMonth = m => { const d = new Date(m + "-01T00:00:00"); d.setMonth(d.ge
 const ls = { get(k,f){ try{ const v = localStorage.getItem(k); return v==null?f:v; }catch{ return f; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch{} } };
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const REACTIONS = ["🙏","😋","☕️","❤️","👍"];
-const CATS = [
+const DEFAULT_CATS = [
   { id:"eat", icon:"🍽", label:"外食" },
   { id:"cafe", icon:"☕️", label:"カフェ" },
   { id:"grocery", icon:"🛒", label:"食料品" },
@@ -342,9 +359,11 @@ const CATS = [
   { id:"gift", icon:"🎁", label:"ギフト" },
   { id:"other", icon:"📦", label:"その他" }
 ];
+let CATS = DEFAULT_CATS;
+const applyCats = () => { const c = S.settings && S.settings.cats; CATS = Array.isArray(c) && c.length ? c : DEFAULT_CATS; };
 const NONE = { id:"none", icon:"", label:"未分類" };
 const catOf = id => CATS.find(c => c.id === id) || NONE;
-const catColor = id => `var(--c-${catOf(id).id})`;
+const catColor = id => { const c = catOf(id); return c.col != null ? `var(--c-p${c.col})` : `var(--c-${c.id})`; };
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const S = {
@@ -397,6 +416,7 @@ async function flush(){
 function apply(d){
   if(!d || Q.length) return;
   if(d.settings) Object.assign(S.settings, d.settings);
+  applyCats();
   S.entries = d.entries || []; S.settlements = d.settlements || [];
   S.ready = true; S.err = ""; S.locked = false; S.synced = Date.now(); S.offline = false; cache();
   const f = document.activeElement && document.activeElement.id;
@@ -671,6 +691,8 @@ function viewSettings(){
   <section class="field"><span class="flabel">新しい立て替えの標準</span>
     <div class="seg"><button data-defshare="0.5" aria-pressed="${st.defaultShare!==1}">割り勘（半分）</button><button data-defshare="1" aria-pressed="${st.defaultShare===1}">全額相手の分</button></div>
     <p class="hint">割り勘：払った額の半分を相手に請求。全額相手の分：相手の物を代わりに買ったとき。</p></section>
+  <section class="field"><span class="flabel">カテゴリ</span>
+    <button class="btn" data-do="cats" style="width:100%">カテゴリを追加・編集・削除（${CATS.length}個）</button></section>
   <button class="btn" data-do="guide">使い方を見る</button>
   <button class="btn" data-do="csv" style="margin-top:8px">CSVで保存する</button>`;
 }
@@ -737,10 +759,22 @@ function catRank(){
 }
 function catsHTML(st){
   const rank = catRank();
-  let list = st.catAll ? rank : rank.slice(0, 5);
-  if(!st.catAll && st.cat && !list.some(c => c.id === st.cat)) list = [...list, catOf(st.cat)];
+  let list = rank.slice(0, 3);
+  if(st.cat && CATS.some(c => c.id === st.cat) && !list.some(c => c.id === st.cat)) list = [...list.slice(0, 2), catOf(st.cat)];
   return list.map(c => `<button type="button" data-cat="${c.id}" aria-pressed="${st.cat===c.id}"><span class="ce">${c.icon}</span>${c.label}</button>`).join("")
-    + `<button type="button" class="more" data-catmore>${st.catAll ? "閉じる ▴" : "すべて ▾"}</button>`;
+    + `<button type="button" class="more" data-catmore>すべて ▾</button>`;
+}
+function catPicker(cur, pick){
+  const o = document.createElement("div"); o.className = "ov"; o.style.zIndex = 80;
+  o.innerHTML = `<div class="ovcard" role="dialog" aria-modal="true" aria-label="カテゴリを選ぶ"><h2 style="font-size:17px">カテゴリを選ぶ</h2>
+    <div class="catgrid">${catRank().map(c => `<button type="button" data-c="${c.id}" aria-pressed="${cur === c.id}"><span>${c.icon}</span>${c.label}</button>`).join("")}</div>
+    <button type="button" class="btn" data-x>閉じる</button></div>`;
+  document.body.appendChild(o);
+  o.addEventListener("click", ev => {
+    const b = ev.target.closest("[data-c]");
+    if(b){ o.remove(); pick(b.dataset.c); return; }
+    if(ev.target === o || ev.target.closest("[data-x]")) o.remove();
+  });
 }
 function entrySheet(e, forceType){
   const isNew = !e;
@@ -779,7 +813,7 @@ function entrySheet(e, forceType){
       const s = ev.target.closest("#share button"); if(s){ st.share = +s.dataset.v; [...s.parentNode.children].forEach(b => b.setAttribute("aria-pressed", b === s)); }
       const g = ev.target.closest("[data-sugg]"); if(g){ $("#f-title", sheet).value = g.dataset.sugg; autoCat(); }
       const c = ev.target.closest("#cats [data-cat]"); if(c){ st.cat = st.cat === c.dataset.cat ? "" : c.dataset.cat; st.catTouched = true; st.catAll = false; paintCats(); }
-      if(ev.target.closest("#cats [data-catmore]")){ st.catAll = !st.catAll; paintCats(); }
+      if(ev.target.closest("#cats [data-catmore]")) catPicker(st.cat, id => { st.cat = id; st.catTouched = true; paintCats(); });
       const r = ev.target.closest("[data-rx]"); if(r && e){ e = toggleReaction(e, r.dataset.rx); $("#rxrow", sheet).outerHTML = reactionRowHTML(e); }
     });
     const paintCats = () => { $("#cats", sheet).innerHTML = catsHTML(st); };
@@ -876,6 +910,63 @@ function settleSheet(s){
     del && del.addEventListener("click", () => {
       closeSheet(); deleteSettleUndo(s);
     });
+  });
+}
+
+/* ================= カテゴリの追加・編集・削除 ================= */
+const EMOJIS = ["🍽","☕️","🍜","🍣","🍰","🍺","🥗","🛒","🧻","🚃","🚗","⛽️","✈️","🏨","🎉","🎬","🎮","🎵","📚","🎓","🏠","🔧","💡","📱","💻","💊","🏥","💄","✂️","👕","👗","🎁","🐶","🐱","👶","🧸","🏋️","⚽️","💼","💰","🧾","🌱","🐾","📦"];
+const firstGlyph = str => { str = String(str || "").trim(); if(!str) return ""; try{ for(const x of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(str)) return x.segment; }catch{} return Array.from(str)[0]; };
+function catEditor(){
+  const ce = { mode: "list", id: "", icon: "🏷", name: "" };
+  const cats = () => CATS.map(c => ({ ...c }));
+  const listHTML = () => `
+    <div class="shead"><button class="link" data-close>閉じる</button><h3>カテゴリの編集</h3><span></span></div>
+    <div class="list">${CATS.map(c => `<button type="button" class="ce-row" data-ce="${esc(c.id)}"><span class="em">${esc(c.icon)}</span>${esc(c.label)}<span class="chev">›</span></button>`).join("")}</div>
+    <button type="button" class="btn primary press" data-ce-new>＋ 新しいカテゴリを追加</button>
+    <p class="hint">削除しても、過去の記録は消えません（「未分類」として表示されます）。内容はふたりで共有されます。</p>`;
+  const editHTML = () => `
+    <div class="shead"><button class="link" data-ce-back>戻る</button><h3>${ce.id ? "カテゴリを編集" : "新しいカテゴリ"}</h3><span></span></div>
+    <div class="cename"><span class="prev" id="ce-prev">${esc(ce.icon)}</span><input id="ce-name" maxlength="10" placeholder="名前（例：ペット）" value="${esc(ce.name)}" enterkeyhint="done" autocomplete="off"></div>
+    <div class="emojigrid" id="ce-grid">${EMOJIS.map(e => `<button type="button" data-em="${e}" aria-pressed="${ce.icon === e}">${e}</button>`).join("")}</div>
+    <input class="title-in" id="ce-em" maxlength="8" placeholder="好きな絵文字を直接入力（任意）" autocomplete="off">
+    <button type="button" class="btn primary press" data-ce-save>保存</button>
+    ${ce.id ? `<button type="button" class="delete" data-ce-del>このカテゴリを削除</button>` : ""}`;
+  openSheet(listHTML(), "", sheet => {
+    const inner = $(".in", sheet), grab = '<div class="grab"></div>';
+    const show = () => { inner.innerHTML = grab + (ce.mode === "list" ? listHTML() : editHTML()); };
+    sheet.addEventListener("click", ev => {
+      const t = ev.target;
+      const row = t.closest("[data-ce]"); if(row){ const c = catOf(row.dataset.ce); ce.mode = "edit"; ce.id = c.id; ce.icon = c.icon; ce.name = c.label; show(); return; }
+      if(t.closest("[data-ce-new]")){ ce.mode = "edit"; ce.id = ""; ce.icon = "🏷"; ce.name = ""; show(); const n = $("#ce-name", sheet); n && n.focus(); return; }
+      if(t.closest("[data-ce-back]")){ ce.mode = "list"; show(); return; }
+      const em = t.closest("[data-em]"); if(em){ ce.icon = em.dataset.em; $("#ce-prev", sheet).textContent = ce.icon; $("#ce-em", sheet).value = ""; $$("#ce-grid button", sheet).forEach(b => b.setAttribute("aria-pressed", b === em)); return; }
+      if(t.closest("[data-ce-save]")){
+        const name = ($("#ce-name", sheet).value || "").trim().slice(0, 10);
+        if(!name){ toast("名前を入力してください"); return; }
+        const list = cats();
+        if(list.some(c => c.label === name && c.id !== ce.id)){ toast("同じ名前のカテゴリがあります"); return; }
+        if(ce.id){ const c = list.find(x => x.id === ce.id); c.icon = ce.icon; c.label = name; }
+        else {
+          const used = list.map(c => c.col).filter(v => v != null);
+          const col = [0,1,2,3,4,5,6,7].sort((a, b) => used.filter(v => v === a).length - used.filter(v => v === b).length)[0];
+          list.push({ id: "u" + Array.from({ length: 7 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join(""), icon: ce.icon, label: name, col });
+        }
+        saveSettings({ cats: list }); toast(ce.id ? "カテゴリを変更しました" : "カテゴリを追加しました");
+        ce.mode = "list"; show(); return;
+      }
+      if(t.closest("[data-ce-del]")){
+        if(CATS.length <= 1){ toast("最後の1つは削除できません"); return; }
+        const prev = cats(), gone = catOf(ce.id), used = S.entries.filter(e => e.category === ce.id).length;
+        saveSettings({ cats: prev.filter(c => c.id !== ce.id) });
+        ce.mode = "list"; show();
+        toast(`「${gone.label}」を削除しました${used ? `（${used}件は未分類に）` : ""}`, () => { saveSettings({ cats: prev }); if(document.body.contains(sheet)){ ce.mode = "list"; show(); } toast("元に戻しました"); });
+      }
+    });
+    sheet.addEventListener("input", ev => {
+      if(ev.target.id === "ce-name") ce.name = ev.target.value;
+      if(ev.target.id === "ce-em" && !ev.isComposing){ const g = firstGlyph(ev.target.value); if(g){ ce.icon = g; $("#ce-prev", sheet).textContent = g; $$("#ce-grid button", sheet).forEach(b => b.setAttribute("aria-pressed", b.dataset.em === g)); } }
+    });
+    sheet.addEventListener("keydown", ev => { if(ev.key === "Enter" && ev.target.id === "ce-name"){ ev.preventDefault(); ev.target.blur(); } });
   });
 }
 
@@ -1006,7 +1097,7 @@ function toast(msg, undo){
   toastT = setTimeout(() => t.remove(), undo ? 5000 : 2000);
 }
 function saveSettings(patch){
-  Object.assign(S.settings, patch); cache(); render();
+  Object.assign(S.settings, patch); applyCats(); cache(); render();
   enqueue("saveSettings", [{ ...S.settings }]);
 }
 function markSeen(){ S.seenAt = Date.now(); ls.set("seenAt", String(S.seenAt)); }
@@ -1034,7 +1125,7 @@ document.addEventListener("click", ev => {
   if(t.closest("[data-close]")) return closeSheet();
   if(t.closest("#lockwho button")){ const b = t.closest("#lockwho button"); S.me = b.dataset.v; [...b.parentNode.children].forEach(x => x.setAttribute("aria-pressed", x === b)); return; }
   const tab = t.closest("[data-tab]"); if(tab) return goTab(tab.dataset.tab);
-  const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else exportCsv(); return; }
+  const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else exportCsv(); return; }
   const rc = t.closest("[data-recap]"); if(rc) return recapSheet(rc.dataset.recap);
   if($("#layer").innerHTML) return;
   const ed = t.closest("[data-edit]"); if(ed){ const e = S.entries.find(x => x.id === ed.dataset.edit); if(e) entrySheet(e); return; }
@@ -1109,7 +1200,7 @@ document.addEventListener("keydown", ev => { if(ev.key === "Escape" && $("#layer
 /* ================= 起動 ================= */
 if(!S.pass || !S.me){ S.locked = true; S.ready = true; render(); }
 else {
-  try{ const c = JSON.parse(ls.get("cache", "null")); if(c){ if(c.settings) Object.assign(S.settings, c.settings); S.entries = c.entries || []; S.settlements = c.settlements || []; S.ready = true; } }catch{}
+  try{ const c = JSON.parse(ls.get("cache", "null")); if(c){ if(c.settings) Object.assign(S.settings, c.settings); applyCats(); S.entries = c.entries || []; S.settlements = c.settlements || []; S.ready = true; } }catch{}
   render(); load(); maybeGuide();
 }
 if("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
