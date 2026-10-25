@@ -1124,11 +1124,17 @@ function importSheet(){
   const have = new Set([...S.entries, ...S.settlements].map(x => x.id));
   const calc = () => {
     const b = buildImport(st.items, { pay: st.pay, share: st.share, cat: st.cat });
-    const ne = b.entries.filter(x => !have.has(x.id)), ns = b.settlements.filter(x => !have.has(x.id));
-    const credit = S.entries.reduce((c, e) => c + entryCredit(e), 0) + S.settlements.reduce((c, x) => c + settleCredit(x), 0)
-      + ne.reduce((c, e) => c + entryCredit(e), 0) + ns.reduce((c, x) => c + settleCredit(x), 0);
+    // すでにアプリに登録してある記録（払った人・金額・日付が同じ）は、二重にならないようスキップする
+    const pool = new Map(), take = k => { const n = pool.get(k) || 0; if(n > 0){ pool.set(k, n - 1); return true; } return false; };
+    S.entries.forEach(e => { const k = `e|${e.payer}|${e.amount}|${e.date}`; pool.set(k, (pool.get(k) || 0) + 1); });
+    S.settlements.forEach(x => { const k = `s|${x.from}|${x.amount}|${x.date}`; pool.set(k, (pool.get(k) || 0) + 1); });
+    let dup = 0;
+    const ne = b.entries.filter(x => { if(have.has(x.id)) return false; if(take(`e|${x.payer}|${x.amount}|${x.date}`)){ dup++; return false; } return true; });
+    const ns = b.settlements.filter(x => { if(have.has(x.id)) return false; if(take(`s|${x.from}|${x.amount}|${x.date}`)){ dup++; return false; } return true; });
+    const before = Math.round(S.entries.reduce((c, e) => c + entryCredit(e), 0) + S.settlements.reduce((c, x) => c + settleCredit(x), 0));
+    const credit = before + ne.reduce((c, e) => c + entryCredit(e), 0) + ns.reduce((c, x) => c + settleCredit(x), 0);
     const dates = st.items.map(x => x.date).sort();
-    return { b, ne, ns, credit: Math.round(credit), from: dates[0], to: dates[dates.length - 1] };
+    return { b, ne, ns, dup, before, credit: Math.round(credit), from: dates[0], to: dates[dates.length - 1] };
   };
   const html = () => {
     if(!st.items) return `
@@ -1145,7 +1151,9 @@ function importSheet(){
         <div class="frow"><label>立て替え</label><b class="num">${c.ne.length.toLocaleString("ja-JP")}件</b></div>
         <div class="frow"><label>返済</label><b class="num">${c.ns.length.toLocaleString("ja-JP")}件</b></div>
         <div class="frow"><label>期間</label><span class="num">${esc(c.from)} 〜 ${esc(c.to)}</span></div>
-        ${st.items.length - c.ne.length - c.ns.length ? `<div class="frow"><label>取り込み済み</label><span class="num">${(st.items.length - c.ne.length - c.ns.length).toLocaleString("ja-JP")}件（スキップ）</span></div>` : ""}
+        ${c.dup ? `<div class="frow"><label>登録済みと同じ</label><span class="num">${c.dup.toLocaleString("ja-JP")}件（スキップ）</span></div>` : ""}
+        ${st.items.length - c.ne.length - c.ns.length - c.dup ? `<div class="frow"><label>取り込み済み</label><span class="num">${(st.items.length - c.ne.length - c.ns.length - c.dup).toLocaleString("ja-JP")}件（スキップ）</span></div>` : ""}
+        ${S.entries.length + S.settlements.length ? `<div class="frow"><label>いまのアプリ</label><span class="num">${(S.entries.length + S.settlements.length).toLocaleString("ja-JP")}件・${esc(c.before === 0 ? "貸し借りなし" : `${nameOf(c.before > 0 ? "b" : "a")} → ${nameOf(c.before > 0 ? "a" : "b")} ${yen(c.before)}`)}</span></div>` : ""}
         ${st.bad.length ? `<div class="frow"><label>読めなかった行</label><span class="num" style="color:var(--danger)">${st.bad.length}件</span></div>` : ""}</div>
       <span class="flabel">金額の扱い</span>
       <div class="seg"><button type="button" data-imp-share="1" aria-pressed="${st.share === 1}">全額が相手の負担</button><button type="button" data-imp-share="0.5" aria-pressed="${st.share === 0.5}">割り勘（半分）</button></div>
