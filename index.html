@@ -167,7 +167,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .key{height:50px;border:0;border-radius:14px;background:var(--surface);font:700 24px var(--numf);display:grid;place-items:center}
 .key.op{background:var(--tintSoft);color:var(--tint);font-size:26px}
-.key.fn{background:transparent;color:var(--muted);font-size:17px;font-family:var(--font)}
+.key.fn{background:transparent;color:var(--muted);font-size:17px;font-family:var(--font);-webkit-touch-callout:none}
 .key svg{width:24px;height:24px}
 .submit{height:56px;border:0;border-radius:18px;background:var(--tint);color:var(--onTint);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-color .3s,opacity .2s}
 .submit:disabled{opacity:.35}
@@ -338,18 +338,18 @@ const balance = () => S.entries.reduce((c,e) => c + entryCredit(e), 0) + S.settl
 const sorted = arr => [...arr].sort((x,y) => (y.date||"").localeCompare(x.date||"") || (y.createdAt||0) - (x.createdAt||0));
 
 function evalExpr(str){
-  const s = String(str).replace(/×/g,"*").replace(/−/g,"-").replace(/[^0-9+\-*.]/g,"");
+  const s = String(str).replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-").replace(/[^0-9+\-*\/.]/g,"");
   if(!s) return NaN;
   let i = 0;
   const num = () => { const m = /^[0-9]*\.?[0-9]+/.exec(s.slice(i)); if(!m) throw 0; i += m[0].length; return parseFloat(m[0]); };
-  const term = () => { let v = num(); while(s[i] === "*"){ i++; v *= num(); } return v; };
+  const term = () => { let v = num(); while(s[i] === "*" || s[i] === "/"){ const o = s[i++]; const r = num(); v = o === "*" ? v * r : v / r; } return v; };
   const expr = () => { let v = term(); while(s[i] === "+" || s[i] === "-"){ const o = s[i++]; const r = term(); v = o === "+" ? v + r : v - r; } return v; };
   try{ const v = expr(); return i === s.length && Number.isFinite(v) ? Math.round(v) : NaN; }catch{ return NaN; }
 }
-const isOp = c => c === "+" || c === "−" || c === "×";
+const isOp = c => c === "+" || c === "−" || c === "×" || c === "÷";
 function keyInput(expr, k){
   const last = expr.slice(-1);
-  const lastNum = expr.split(/[+−×]/).pop();
+  const lastNum = expr.split(/[+−×÷]/).pop();
   if(k === "C") return "";
   if(k === "⌫") return expr.slice(0, -1);
   if(isOp(k)){ if(!expr) return expr; return isOp(last) ? expr.slice(0,-1) + k : expr + k; }
@@ -360,7 +360,7 @@ function keyInput(expr, k){
   return expr + k;
 }
 const exprValue = expr => evalExpr(isOp(expr.slice(-1)) ? expr.slice(0,-1) : expr);
-const exprPretty = expr => expr.replace(/\d+/g, d => (+d).toLocaleString("ja-JP")).replace(/([+−×])/g, " $1 ");
+const exprPretty = expr => expr.replace(/\d+/g, d => (+d).toLocaleString("ja-JP")).replace(/([+−×÷])/g, " $1 ");
 
 /* ================= アイコン ================= */
 const I = {
@@ -560,19 +560,23 @@ function keypadHTML(label){
   const k = (v, cls = "", lbl = v) => `<button type="button" class="key ${cls}" data-key="${v}" aria-label="${lbl}">${v === "⌫" ? I.back : v}</button>`;
   return `<div class="keys">
     <div class="keypad" role="group" aria-label="金額キー">
-      ${k("7")}${k("8")}${k("9")}${k("⌫","fn","1文字消す")}
-      ${k("4")}${k("5")}${k("6")}${k("+","op","足す")}
+      ${k("7")}${k("8")}${k("9")}${k("÷","op","割る")}
+      ${k("4")}${k("5")}${k("6")}${k("×","op","かける")}
       ${k("1")}${k("2")}${k("3")}${k("−","op","引く")}
-      ${k("C","fn","クリア")}${k("0")}${k("00")}${k("×","op","かける")}
+      ${k("⌫","fn","1文字消す（長押しで全部消す）")}${k("0")}${k("00")}${k("+","op","足す")}
     </div>
     <button type="button" class="submit press" id="save">${label}</button></div>`;
 }
 function bindKeypad(sheet, st, onChange){
   const press = key => { st.expr = keyInput(st.expr, key); onChange(); };
-  sheet.addEventListener("click", ev => { const b = ev.target.closest("[data-key]"); if(b) press(b.dataset.key); });
+  let lpT = null, lpDone = false;
+  sheet.addEventListener("click", ev => { const b = ev.target.closest("[data-key]"); if(!b) return; if(lpDone){ lpDone = false; return; } press(b.dataset.key); });
+  sheet.addEventListener("pointerdown", ev => { const b = ev.target.closest('[data-key="⌫"]'); if(!b) return; lpDone = false; lpT = setTimeout(() => { lpDone = true; press("C"); }, 500); });
+  ["pointerup","pointerleave","pointercancel"].forEach(t => sheet.addEventListener(t, () => clearTimeout(lpT)));
+  sheet.addEventListener("contextmenu", ev => { if(ev.target.closest("[data-key]")) ev.preventDefault(); });
   sheet.addEventListener("keydown", ev => {
     if(ev.target.tagName === "INPUT") return;
-    const map = { "+":"+", "-":"−", "*":"×", "x":"×", "Backspace":"⌫", "Escape":null };
+    const map = { "+":"+", "-":"−", "*":"×", "x":"×", "/":"÷", "Backspace":"⌫", "Delete":"C", "Escape":null };
     if(/^[0-9]$/.test(ev.key)) { press(ev.key); ev.preventDefault(); }
     else if(ev.key in map && map[ev.key]) { press(map[ev.key]); ev.preventDefault(); }
     else if(ev.key === "Enter"){ const s = $("#save", sheet); if(!s.disabled) s.click(); ev.preventDefault(); }
@@ -580,7 +584,7 @@ function bindKeypad(sheet, st, onChange){
 }
 function amountView(expr){
   const v = exprValue(expr);
-  const showExpr = /[+−×]/.test(expr) ? exprPretty(expr) + (isOp(expr.slice(-1)) ? "" : " =") : "";
+  const showExpr = /[+−×÷]/.test(expr) ? exprPretty(expr) + (isOp(expr.slice(-1)) ? "" : " =") : "";
   return `<div class="expr">${esc(showExpr)}</div><div class="total ${v > 0 ? "" : "zero"}"><small>¥</small>${v > 0 ? comma(v) : "0"}</div>`;
 }
 function suggestions(){
