@@ -89,6 +89,12 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .activity .txt{min-width:0;flex:1}
 .activity .when{color:var(--muted);font-size:12px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;display:inline-block}
+.head{display:flex;align-items:center;justify-content:space-between;margin-right:-6px}
+.rbtn{width:44px;height:44px;border:0;background:none;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.rbtn svg{width:22px;height:22px}
+.rbtn:active{background:var(--surface2)}
+.rbtn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .status{font-size:12px;color:var(--muted);display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-top:-10px}
 .status.off{color:var(--warn);font-weight:700}
 
@@ -422,6 +428,18 @@ function apply(d){
   const f = document.activeElement && document.activeElement.id;
   if(f !== "q" && f !== "nA" && f !== "nB") render();
 }
+let refreshing = false;
+async function refresh(){
+  if(refreshing) return; refreshing = true;
+  const spin = on => document.querySelectorAll("[data-refresh]").forEach(b => b.classList.toggle("spin", on));
+  spin(true);
+  const t0 = Date.now();
+  try{ await load(); }catch{}
+  spin(true); // 再描画でボタンが作り直されるので、回転をもう一度付ける
+  await new Promise(r => setTimeout(r, Math.max(0, 600 - (Date.now() - t0)))); // くるっと回る時間を最低限確保
+  refreshing = false; spin(false);
+  if(!S.err && !S.offline && !S.locked) toast("最新の状態にしました");
+}
 async function load(){
   if(!API_URL.startsWith("http")){ S.err = "index.html の API_URL に GAS のURLを設定してください。"; S.ready = true; render(); return; }
   if(Q.length) return flush();
@@ -497,6 +515,7 @@ const exprPretty = expr => expr.replace(/\d+/g, d => (+d).toLocaleString("ja-JP"
 
 /* ================= アイコン ================= */
 const I = {
+  refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>',
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16 14.5h2"/></svg>',
   list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01"/></svg>',
   history:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>',
@@ -518,6 +537,7 @@ function renderTabs(){
   $("#navbar").hidden = S.locked;
   $("#tabs").innerHTML = S.locked ? "" : t.map(([k,l]) => `<button class="tab" data-tab="${k}" ${S.tab===k?'aria-current="page"':''}>${I[k]}<span>${l}</span>${k==="list"&&n?`<span class="badge" aria-label="新着${n}件">${n}</span>`:""}</button>`).join("");
 }
+const headHTML = t => `<div class="head"><h1>${t}</h1><button type="button" class="rbtn" data-refresh aria-label="最新の状態に更新">${I.refresh}</button></div>`;
 function statusHTML(){
   if(Q.length) return S.offline
     ? `<div class="status off" id="status">${I.cloud}オフライン・${Q.length}件は電波が戻ったら送信します</div>`
@@ -575,11 +595,11 @@ function viewHome(){
   const pm = prevMonth(m);
   const showRecap = +today().slice(8) <= 7 && S.entries.some(e => ym(e.date) === pm);
   return `
-  <h1>ふたりの立て替え帳</h1>
+  ${headHTML("ふたりの立て替え帳")}
   <section class="balance" aria-label="いまの精算額">
     ${card}
     <div class="actions">
-      <button class="act primary press" data-do="settle">${I.settle}まとめて精算</button>
+      <button class="act primary press" data-do="settle">${I.settle}返済</button>
       <button class="act press" data-do="loan">${I.loan}貸し借り</button>
       <button class="act press" data-do="csv">${I.csv}CSV保存</button>
     </div>
@@ -662,7 +682,7 @@ function listBodyHTML(){
 }
 function viewList(){
   const chip = (k,l) => `<button class="chip" data-filter="${k}" aria-pressed="${S.filter===k}">${l}</button>`;
-  return `<h1>立て替えリスト</h1>
+  return `${headHTML("立て替えリスト")}
     <div class="chips">${chip("all","すべて")}${chip("this","今月")}${chip("last","先月")}${S.cat ? `<button class="catfilter" data-catclear aria-label="カテゴリの絞り込みを解除">${catOf(S.cat).icon} ${esc(catOf(S.cat).label)} ✕</button>` : ""}</div>
     <input class="search" id="q" type="search" placeholder="件名・カテゴリ・名前・金額で検索" value="${esc(S.q)}" aria-label="検索">
     <div class="view" id="listbody">${listBodyHTML()}</div>`;
@@ -670,16 +690,16 @@ function viewList(){
 
 function viewHistory(){
   const items = sorted(S.settlements);
-  return `<h1>精算履歴</h1>
+  return `${headHTML("精算履歴")}
     <div class="list">${items.length ? items.map(s => `<div class="sw" data-kind="settle" data-id="${esc(s.id)}"><div class="sa edit"><span>✏️ 編集</span></div><div class="sa del"><span>削除 🗑</span></div><button class="row" data-settle="${esc(s.id)}">
-      <span class="t">${esc(s.note || "まとめて精算")}</span>
+      <span class="t">${esc(s.note || "返済")}</span>
       <span class="amt"><span class="tag ${s.from}">${esc(name(s.from))} → ${esc(name(other(s.from)))}</span><b>${yen(s.amount)}</b></span>
       <span class="d">${fmtDate(s.date)}</span></button></div>`).join("") : `<div class="empty">精算するとここに記録が残ります</div>`}</div>`;
 }
 
 function viewSettings(){
   const st = S.settings;
-  return `<h1>設定</h1>
+  return `${headHTML("設定")}
   <section class="field"><span class="flabel">ふたりの名前</span>
     <div class="form">
       <div class="frow"><label for="nA">ひとり目</label><input id="nA" value="${esc(st.nameA)}" maxlength="12"></div>
@@ -873,7 +893,7 @@ function settleSheet(s){
   const b = Math.round(balance());
   const st = { from: s ? s.from : (b > 0 ? "b" : "a"), expr: s ? String(s.amount) : (b ? String(Math.abs(b)) : ""), date: s?.date || today() };
   openSheet(`
-    <div class="shead"><button class="link" data-close>キャンセル</button><h3>${isNew ? "まとめて精算" : "精算を編集"}</h3><span></span></div>
+    <div class="shead"><button class="link" data-close>キャンセル</button><h3>${isNew ? "返済" : "精算を編集"}</h3><span></span></div>
     <div class="seg who2" id="sfrom" role="group" aria-label="お金を渡した人">
       ${["a","b"].map(p => `<button type="button" class="${p}" data-v="${p}" aria-pressed="${st.from===p}"><span class="ini">${esc(ini(p))}</span>${esc(name(p))}が渡した</button>`).join("")}
     </div>
@@ -1013,7 +1033,7 @@ function guideSlides(){
   return [
     { art: `<span class="pill a">${esc(name("a"))}が払った</span><span class="pill b">${esc(name("b"))}が払った</span>`, h: "払った人を選ぶ", p: "立て替えたほうを選びます。ふたりの色で、だれの記録かひと目でわかります。" },
     { art: `<span class="big num">¥1,280</span><span class="pill">🍽 外食</span><span class="pill">☕️ カフェ</span>`, h: "金額を入れて、カテゴリを選ぶ", p: "電卓のように「2000÷2」の計算もできます。割り勘か「全額相手の分」かも選べます。" },
-    { art: `<span class="pill a">登録</span><span style="font-size:26px">→</span><span class="pill" style="background:var(--aSoft)">精算ゼロ ✨</span>`, h: "登録して、たまったら精算", p: "相手の画面にもすぐ届きます。ホームの「まとめて精算」でゼロに。リストは左右にスワイプで、編集・削除ができます。" }
+    { art: `<span class="pill a">登録</span><span style="font-size:26px">→</span><span class="pill" style="background:var(--aSoft)">精算ゼロ ✨</span>`, h: "登録して、たまったら精算", p: "相手の画面にもすぐ届きます。ホームの「返済」でゼロに。リストは左右にスワイプで、編集・削除ができます。" }
   ];
 }
 function showGuide(){
@@ -1105,7 +1125,7 @@ function exportCsv(){
   const q = v => `"${String(v ?? "").replace(/"/g,'""')}"`;
   const lines = [["種別","日付","件名","カテゴリ","払った人","金額","相手の負担","相手が負担する額","登録した人"].map(q).join(",")];
   for(const e of sorted(S.entries)) lines.push([e.type==="loan"?"貸し借り":"立て替え", e.date, e.title, e.category ? catOf(e.category).label : "", name(e.payer), e.amount, e.type==="loan"?"全額":(e.share===1?"全額":"半分"), Math.abs(entryCredit(e)), e.by ? name(e.by) : ""].map(q).join(","));
-  for(const s of sorted(S.settlements)) lines.push(["精算", s.date, s.note || "まとめて精算", "", name(s.from), s.amount, "", "", s.by ? name(s.by) : ""].map(q).join(","));
+  for(const s of sorted(S.settlements)) lines.push(["精算", s.date, s.note || "返済", "", name(s.from), s.amount, "", "", s.by ? name(s.by) : ""].map(q).join(","));
   try{
     const url = URL.createObjectURL(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv" }));
     const a = document.createElement("a"); a.href = url; a.download = `ふたりの立て替え帳_${today()}.csv`;
@@ -1125,6 +1145,7 @@ document.addEventListener("click", ev => {
   if(t.closest("[data-close]")) return closeSheet();
   if(t.closest("#lockwho button")){ const b = t.closest("#lockwho button"); S.me = b.dataset.v; [...b.parentNode.children].forEach(x => x.setAttribute("aria-pressed", x === b)); return; }
   const tab = t.closest("[data-tab]"); if(tab) return goTab(tab.dataset.tab);
+  if(t.closest("[data-refresh]") && !$("#layer").innerHTML) return refresh();
   const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else exportCsv(); return; }
   const rc = t.closest("[data-recap]"); if(rc) return recapSheet(rc.dataset.recap);
   if($("#layer").innerHTML) return;
