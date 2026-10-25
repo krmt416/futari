@@ -717,6 +717,10 @@ function rowEntry(e){
   </button></div>`;
 }
 
+// 検索用の正規化：全角/半角・大文字/小文字・ひらがな/カタカナの違いを無視する
+const searchNorm = v => String(v == null ? "" : v).normalize("NFKC").toLowerCase()
+  .replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60))
+  .replace(/\s+/g, " ").trim();
 function listBodyHTML(){
   const thisM = ym(today()), lastM = prevMonth(thisM);
   let items = sorted(S.entries);
@@ -724,7 +728,13 @@ function listBodyHTML(){
   if(S.filter === "last") items = items.filter(e => ym(e.date) === lastM);
   if(S.cat) items = items.filter(e => catOf(e.category).id === S.cat && !(e.type === "loan" && !e.category));
   const q = S.q.trim();
-  if(q) items = items.filter(e => (e.title||"").includes(q) || name(e.payer).includes(q) || (e.category && catOf(e.category).label.includes(q)) || String(e.amount).includes(q.replace(/[¥,]/g,"")));
+  if(q){
+    const tokens = searchNorm(q).split(" ").map(t => t.replace(/[¥,円]/g, "")).filter(Boolean);   // 空白で区切ると「AかつB」で絞り込む
+    items = items.filter(e => {
+      const hay = searchNorm([e.title, name(e.payer), e.category ? catOf(e.category).label : "", e.amount, e.date].join(" "));
+      return tokens.every(t => hay.includes(t));
+    });
+  }
   const total = items.length;
   const allGroups = new Map();   // 月ごとの合計は、表示件数に関係なく全件で計算する
   for(const e of items){ const k = ym(e.date); if(!allGroups.has(k)) allGroups.set(k, []); allGroups.get(k).push(e); }
