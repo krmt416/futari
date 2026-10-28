@@ -91,6 +91,9 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .activity .when{color:var(--muted);font-size:12px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;display:inline-block}
 .head{display:flex;align-items:center;justify-content:space-between;margin-right:-6px}
+#ptr{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:50%;width:40px;height:40px;border-radius:50%;background:var(--surface);box-shadow:0 2px 10px rgba(0,0,0,.15);display:grid;place-items:center;opacity:0;transform:translate(-50%,-44px);z-index:30;pointer-events:none;color:var(--muted)}
+#ptr svg{width:20px;height:20px}
+#ptr.ready{color:var(--a)}
 .rbtn{width:44px;height:44px;border:0;background:none;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
 .rbtn svg{width:22px;height:22px}
 .rbtn:active{background:var(--surface2)}
@@ -711,16 +714,15 @@ function catSectionHTML(m){
   </div></section>`;
 }
 function activityHTML(){
-  const p = other(me());
   const items = [
-    ...S.entries.filter(e => e.by === p).map(e => ({ t: e.createdAt||0, txt: `「${e.title || (e.type==="loan"?"貸し借り":"立て替え")} ${yen(e.amount)}」を追加`, id: e.id, kind: "e" })),
-    ...S.settlements.filter(s => s.by === p).map(s => ({ t: s.createdAt||0, txt: `${yen(s.amount)}の精算を記録`, id: s.id, kind: "s" }))
+    ...S.entries.filter(e => e.by).map(e => ({ t: e.createdAt||0, by: e.by, txt: `「${e.title || (e.type==="loan"?"貸し借り":"立て替え")} ${yen(e.amount)}」を追加`, id: e.id, kind: "e" })),
+    ...S.settlements.filter(s => s.by).map(s => ({ t: s.createdAt||0, by: s.by, txt: `${yen(s.amount)}の返済を記録`, id: s.id, kind: "s" }))
   ].filter(x => Date.now() - x.t < 7 * 86400000).sort((a,b) => b.t - a.t);
   if(!items.length) return "";
-  const x = items[0], fresh = x.t > S.dotSince;
+  const x = items[0], p = x.by, mine = p === me(), fresh = !mine && x.t > S.dotSince;
   return `<button class="activity press" data-${x.kind === "e" ? "edit" : "settle"}="${esc(x.id)}">
     ${fresh ? '<span class="dot" aria-label="新着"></span>' : `<span class="ini ${p}">${esc(ini(p))}</span>`}
-    <span class="txt"><b>${esc(name(p))}</b> が${esc(x.txt)}しました</span><span class="when">${ago(x.t)}</span></button>`;
+    <span class="txt"><b>${mine ? "あなた" : esc(name(p))}</b> が${esc(x.txt)}しました</span><span class="when">${ago(x.t)}</span></button>`;
 }
 function rowEntry(e){
   const loan = e.type === "loan";
@@ -1552,6 +1554,24 @@ else {
   render(); load();
 }
 if("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+/* ---- 画面を引っ張って更新 ---- */
+(() => {
+  const el = document.createElement("div"); el.id = "ptr"; el.setAttribute("aria-hidden", "true"); el.innerHTML = I.refresh; document.body.appendChild(el);
+  let y0 = 0, x0 = 0, pull = 0, on = false;
+  const TH = 70, setP = (d, snap) => { el.style.transition = snap ? "transform .25s,opacity .25s" : "none"; el.style.transform = `translate(-50%,${d - 44}px) rotate(${d * 4}deg)`; el.style.opacity = Math.min(1, d / TH); el.classList.toggle("ready", d >= TH); };
+  addEventListener("touchstart", e => {
+    on = false; if(e.touches.length !== 1 || window.scrollY > 0 || $("#layer").innerHTML || refreshing || e.target.closest("input,textarea,.sw.open")) return;
+    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; pull = 0; on = true;
+  }, { passive: true });
+  addEventListener("touchmove", e => {
+    if(!on) return; const dy = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
+    if(dy <= 0 || Math.abs(dx) > dy) { if(pull){ pull = 0; setP(0, true); } if(dy <= 0) on = window.scrollY <= 0 ? on : false; return; }
+    if(window.scrollY > 0){ on = false; setP(0, true); return; }
+    pull = Math.min(110, dy * 0.5); setP(pull); if(e.cancelable) e.preventDefault();
+  }, { passive: false });
+  const end = () => { if(!on) return; on = false; const go = pull >= TH; pull = 0; setP(0, true); if(go) refresh(); };
+  addEventListener("touchend", end, { passive: true }); addEventListener("touchcancel", end, { passive: true });
+})();
 window.addEventListener("online", () => { if(S.locked || !S.pass) return; S.offline = false; flush(); load(); });
 window.addEventListener("offline", () => { S.offline = true; renderStatus(); });
 document.addEventListener("visibilitychange", () => {
@@ -1561,7 +1581,7 @@ document.addEventListener("visibilitychange", () => {
 setInterval(() => {
   if(document.hidden || !S.pass || S.locked) return;
   if(Q.length) flush(); else if(!$("#layer").innerHTML) load();
-}, 20000);
+}, 10000);
 })();
 </script>
 </body>
