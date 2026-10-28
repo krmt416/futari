@@ -195,6 +195,18 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .catcard{background:var(--surface);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .catbar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--surface2)}
 .catbar i{display:block;height:100%;min-width:3px}
+.trbars{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:6px}
+.trcol{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.trtop{font-size:10px;font-weight:800;color:var(--muted);white-space:nowrap;font-family:var(--numf)}
+.trstack{width:100%;max-width:34px;display:flex;flex-direction:column-reverse;border-radius:7px;overflow:hidden;background:var(--surface2);min-height:3px}
+.trstack i{display:block;width:100%}
+.trm{font-size:11px;font-weight:700;color:var(--muted)}
+.trm.now{color:var(--ink);font-weight:800}
+.trrow{width:100%;border:0;background:none;display:grid;grid-template-columns:12px 1fr auto;gap:2px 10px;align-items:center;text-align:left;padding:9px 6px;border-radius:12px;font-size:14px;color:var(--ink)}
+.trrow[aria-pressed="true"]{background:var(--accentSoft)}
+.trrow .csw{width:12px;height:12px;border-radius:4px;grid-row:span 2}
+.trrow .s2{grid-column:2/4;font-size:12px;color:var(--muted);font-weight:600}
+.trrow .up{color:#c2566e}.trrow .dn{color:#2f7d68}
 .catlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .catlist button{width:100%;display:grid;grid-template-columns:12px 1fr auto auto;gap:10px;align-items:center;border:0;background:none;padding:8px 0;border-top:1px solid var(--line);text-align:left;font-size:14px}
 .catlist li:first-child button{border-top:0}
@@ -711,6 +723,7 @@ function catSectionHTML(m){
       <span><span class="ce">${c.icon}</span> ${esc(c.label)} <span class="cnt">${r.n}件</span></span>
       <span class="amt">${yen(r.sum)}</span><span class="pct">${pct(r.sum)}%</span></button></li>`; }).join("")}</ul>
     ${rows.length > 5 ? `<div class="more"><span>ほか${rows.length - 5}カテゴリ</span></div>` : ""}
+    <button type="button" class="mini press" data-trend style="align-self:flex-start">月ごとの推移を見る</button>
   </div></section>`;
 }
 function activityHTML(){
@@ -1393,6 +1406,40 @@ function catRecapHTML(ex){
     <div class="catbar" style="margin-bottom:10px">${rows.map(r => `<i style="width:${r.sum/total*100}%;background:${catColor(r.id)}"></i>`).join("")}</div>
     <ol class="rank">${rows.slice(0, 5).map((r,i) => { const c = catOf(r.id); return `<li><span class="n">${i+1}</span><span><span class="ce">${c.icon}</span> ${esc(c.label)}</span><span class="num">${Math.round(r.sum/total*100)}%・${yen(r.sum)}</span></li>`; }).join("")}</ol></div>`;
 }
+function trendSheet(){
+  const st = { n: 6, cat: "" };
+  const short = v => v >= 10000 ? (Math.round(v / 1000) / 10) + "万" : v ? String(v) : "";
+  const body = () => {
+    const t = ym(today()); const months = []; let m = t;
+    for(let i = 0; i < st.n; i++){ months.unshift(m); m = prevMonth(m); }
+    const per = months.map(k => { const { rows } = catStats(S.entries.filter(e => ym(e.date) === k)); return new Map(rows.map(r => [r.id, r.sum])); });
+    const tot = new Map(); per.forEach(mp => mp.forEach((v, id) => tot.set(id, (tot.get(id) || 0) + v)));
+    const ids = [...tot.keys()].sort((a, b) => tot.get(b) - tot.get(a));
+    const sums = per.map(mp => st.cat ? (mp.get(st.cat) || 0) : [...mp.values()].reduce((a, b) => a + b, 0));
+    const max = Math.max(1, ...sums);
+    const cols = months.map((k, i) => {
+      const segs = (st.cat ? [st.cat] : ids).filter(id => per[i].get(id)).map(id => `<i style="height:${per[i].get(id) / max * 100}%;background:${catColor(id)}"></i>`).join("");
+      return `<div class="trcol"><span class="trtop">${short(sums[i])}</span><div class="trstack" style="height:${Math.max(0, sums[i] / max * 128)}px">${segs}</div><span class="trm${k === t ? " now" : ""}">${+k.slice(5)}月</span></div>`;
+    }).join("");
+    const nowI = months.length - 1, pv = nowI - 1;
+    const rows = ids.map(id => {
+      const c = catOf(id), a = per[nowI].get(id) || 0, b = per[pv] ? (per[pv].get(id) || 0) : 0, d = a - b;
+      const dl = d === 0 ? "先月と同じ" : `先月比 <span class="${d > 0 ? "up" : "dn"}">${d > 0 ? "＋" : "−"}${yen(Math.abs(d))}</span>`;
+      return `<button type="button" class="trrow press" data-trc="${esc(id)}" aria-pressed="${st.cat === id}"><span class="csw" style="background:${catColor(id)}"></span><span><span class="ce">${c.icon}</span> ${esc(c.label)}</span><b class="num">${yen(tot.get(id))}</b><span class="s2">今月 ${yen(a)}・${dl}</span></button>`;
+    }).join("");
+    return `<div class="chips" style="margin:4px 0 6px"><button class="chip" data-trn="6" aria-pressed="${st.n === 6}">6か月</button><button class="chip" data-trn="12" aria-pressed="${st.n === 12}">12か月</button></div>
+      <div class="catcard"><div class="trbars">${cols}</div>
+      <span class="sub">${st.cat ? esc(catOf(st.cat).label) + "だけを表示中（もう一度タップで全体）" : "カテゴリごとの色分け。下の行をタップすると、そのカテゴリだけ見られます。"}</span></div>
+      <div style="margin-top:10px">${rows || `<div class="empty">まだ記録がありません</div>`}</div>`;
+  };
+  openSheet(`<div class="shead"><button class="link" data-close>閉じる</button><h3>月ごとの推移</h3><span></span></div><div id="tr-body">${body()}</div>`, "", sheet => {
+    sheet.addEventListener("click", ev => {
+      const n = ev.target.closest("[data-trn]"), c = ev.target.closest("[data-trc]");
+      if(n) st.n = +n.dataset.trn; else if(c) st.cat = st.cat === c.dataset.trc ? "" : c.dataset.trc; else return;
+      $("#tr-body", sheet).innerHTML = body();
+    });
+  });
+}
 function recapSheet(m){
   const ex = S.entries.filter(e => ym(e.date) === m && e.type !== "loan");
   const total = ex.reduce((s,e) => s + e.amount, 0);
@@ -1473,6 +1520,7 @@ document.addEventListener("click", ev => {
   if(t.closest("[data-refresh]") && !$("#layer").innerHTML) return refresh();
   const th = t.closest("[data-theme-set]"); if(th){ ls.set("theme", th.dataset.themeSet); applyTheme(th.dataset.themeSet); render(); return; }
   const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else if(k === "import") importSheet(); else if(k === "autocat") autoCatSheet(); else exportCsv(); return; }
+  if(t.closest("[data-trend]")) return trendSheet();
   const rc = t.closest("[data-recap]"); if(rc) return recapSheet(rc.dataset.recap);
   if($("#layer").innerHTML) return;
   const ed = t.closest("[data-edit]"); if(ed){ const e = S.entries.find(x => x.id === ed.dataset.edit); if(e) entrySheet(e); return; }
