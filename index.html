@@ -183,6 +183,19 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .amtview .expr{font-family:var(--numf);font-weight:600;font-size:15px;color:var(--muted);min-height:1.4em;text-align:right;overflow-wrap:anywhere}
 .amtview .total{font-family:var(--numf);font-weight:800;font-size:40px;line-height:1;color:var(--tint);letter-spacing:-.01em}
 .amtview .total.zero{color:var(--line)}
+.amtview{border:2px solid var(--tint);cursor:text;transition:transform .12s,box-shadow .2s;box-shadow:0 0 0 4px color-mix(in srgb,var(--tint) 14%,transparent);-webkit-tap-highlight-color:transparent}
+.amtview.tap{animation:amtTap .28s ease-out}
+@keyframes amtTap{0%{transform:scale(1);box-shadow:0 0 0 4px color-mix(in srgb,var(--tint) 14%,transparent)}35%{transform:scale(.985);box-shadow:0 0 0 9px color-mix(in srgb,var(--tint) 26%,transparent)}100%{transform:scale(1);box-shadow:0 0 0 4px color-mix(in srgb,var(--tint) 14%,transparent)}}
+.amtview .total::after{content:"";display:inline-block;width:3px;height:.85em;margin-left:5px;border-radius:2px;background:var(--tint);vertical-align:-.08em;animation:caret 1.05s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.amtview .total::after{animation:none}.amtview.tap{animation:none}}
+.tile.p{border:0;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.tile .go{margin-left:auto;color:var(--muted);font-size:16px;font-weight:700}
+.prow{width:100%;border:0;background:none;display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;padding:11px 14px;font:inherit;color:var(--ink);border-top:1px solid var(--line)}
+.prow:first-child{border-top:0}
+.prow .t{font-weight:700;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .n{font-weight:800;font-family:var(--numf);font-size:16px}
+.prow .d{grid-column:1/3;font-size:12px;color:var(--muted);font-weight:600}
 .amtview .total small{font-size:24px;font-weight:700;margin-right:3px}
 .title-in{width:100%;border:0;background:var(--surface);border-radius:14px;padding:12px 14px;font-size:16px;-webkit-appearance:none;appearance:none}
 .sugg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:-4px -2px 0;padding:0 2px}
@@ -196,11 +209,13 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .catbar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--surface2)}
 .catbar i{display:block;height:100%;min-width:3px}
 .trbars{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:6px}
-.trcol{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.trcol{border:0;background:none;padding:0;font:inherit;cursor:pointer;flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
 .trtop{font-size:10px;font-weight:800;color:var(--muted);white-space:nowrap;font-family:var(--numf)}
 .trstack{width:100%;max-width:34px;display:flex;flex-direction:column-reverse;border-radius:7px;overflow:hidden;background:var(--surface2);min-height:3px}
+.trstack.cut{position:relative}
+.trstack.cut::before{content:"";position:absolute;left:-3px;right:-3px;top:22%;height:6px;background:var(--surface);transform:rotate(-8deg);z-index:2}
 .trstack i{display:block;width:100%}
-.trm{font-size:11px;font-weight:700;color:var(--muted)}
+.trm{white-space:nowrap;font-size:10.5px;letter-spacing:-.02em;font-weight:700;color:var(--muted)}
 .trm.now{color:var(--ink);font-weight:800}
 .trrow{width:100%;border:0;background:none;display:grid;grid-template-columns:12px 1fr auto;gap:2px 10px;align-items:center;text-align:left;padding:9px 6px;border-radius:12px;font-size:14px;color:var(--ink)}
 .trrow[aria-pressed="true"]{background:var(--accentSoft)}
@@ -674,7 +689,7 @@ function viewHome(){
   const payer = b > 0 ? "b" : "a", payee = other(payer);
   const card = b === 0
     ? `<div class="even">貸し借りなし</div><div class="sub">いまは精算するお金がありません</div>`
-    : `<div class="flow">${whoChip(payer)}<span class="arrow">から</span>${whoChip(payee)}<span class="arrow">へ</span></div>
+    : `<div class="flow"><span data-person="${payer}" role="button" tabindex="0">${whoChip(payer)}</span><span class="arrow">から</span><span data-person="${payee}" role="button" tabindex="0">${whoChip(payee)}</span><span class="arrow">へ</span></div>
        <div class="hero" id="hero" aria-label="${yen(b)}"><span class="yen">¥</span>${heroHTML(b)}</div>
        <div class="sub">精算すると貸し借りがゼロになる金額です</div>`;
   const m = ym(today());
@@ -698,8 +713,8 @@ function viewHome(){
   <section>
     <h2>${+m.slice(5)}月に立て替えた額</h2>
     <div class="split">
-      <div class="tile a"><span class="lbl"><span class="ini a">${esc(ini("a"))}</span>${esc(S.settings.nameA)}</span><span class="val num">${yen(sumBy("a"))}</span></div>
-      <div class="tile b"><span class="lbl"><span class="ini b">${esc(ini("b"))}</span>${esc(S.settings.nameB)}</span><span class="val num">${yen(sumBy("b"))}</span></div>
+      <button type="button" class="tile p a press" data-person="a"><span class="lbl"><span class="ini a">${esc(ini("a"))}</span>${esc(S.settings.nameA)}<span class="go">›</span></span><span class="val num">${yen(sumBy("a"))}</span></button>
+      <button type="button" class="tile p b press" data-person="b"><span class="lbl"><span class="ini b">${esc(ini("b"))}</span>${esc(S.settings.nameB)}<span class="go">›</span></span><span class="val num">${yen(sumBy("b"))}</span></button>
     </div>
   </section>
   ${catSectionHTML(m)}
@@ -868,6 +883,7 @@ function viewSettings(){
   <section class="field"><span class="flabel">データ</span>
     <button class="btn" data-do="import" style="width:100%">CSVから取り込む（前のアプリなど）</button>
     <button class="btn" data-do="autocat" style="width:100%;margin-top:8px">未分類の記録を、自動で分類する</button>
+    <button class="btn" data-do="backup" style="width:100%;margin-top:8px">今すぐバックアップを取る</button>
     <p class="hint">「件名・立て替え者・金額・立て替え日」の4列のCSVを、まとめて取り込めます。同じファイルを2回取り込んでも、二重には増えません。</p></section>
   <button class="btn" data-do="guide">使い方を見る</button>
   <button class="btn" data-do="csv" style="margin-top:8px">CSVで保存する</button>`;
@@ -1407,38 +1423,74 @@ function catRecapHTML(ex){
     <ol class="rank">${rows.slice(0, 5).map((r,i) => { const c = catOf(r.id); return `<li><span class="n">${i+1}</span><span><span class="ce">${c.icon}</span> ${esc(c.label)}</span><span class="num">${Math.round(r.sum/total*100)}%・${yen(r.sum)}</span></li>`; }).join("")}</ol></div>`;
 }
 function trendSheet(){
-  const st = { n: 6, cat: "" };
+  const st = { n: 6, cat: "", m: "", shrink: true };
   const short = v => v >= 10000 ? (Math.round(v / 1000) / 10) + "万" : v ? String(v) : "";
   const body = () => {
-    const t = ym(today()); const months = []; let m = t;
-    for(let i = 0; i < st.n; i++){ months.unshift(m); m = prevMonth(m); }
-    const per = months.map(k => { const { rows } = catStats(S.entries.filter(e => ym(e.date) === k)); return new Map(rows.map(r => [r.id, r.sum])); });
-    const tot = new Map(); per.forEach(mp => mp.forEach((v, id) => tot.set(id, (tot.get(id) || 0) + v)));
+    const t = ym(today()); const all = []; let m = t;
+    for(let i = 0; i <= st.n; i++){ all.unshift(m); m = prevMonth(m); }   // 先頭は「前月比」用の1つ前の月
+    const per = all.map(k => { const { rows } = catStats(S.entries.filter(e => ym(e.date) === k)); return new Map(rows.map(r => [r.id, r.sum])); });
+    const months = all.slice(1), pm = per.slice(1);
+    if(st.m && !months.includes(st.m)) st.m = "";
+    const tot = new Map(); pm.forEach(mp => mp.forEach((v, id) => tot.set(id, (tot.get(id) || 0) + v)));
     const ids = [...tot.keys()].sort((a, b) => tot.get(b) - tot.get(a));
-    const sums = per.map(mp => st.cat ? (mp.get(st.cat) || 0) : [...mp.values()].reduce((a, b) => a + b, 0));
-    const max = Math.max(1, ...sums);
+    const sums = pm.map(mp => st.cat ? (mp.get(st.cat) || 0) : [...mp.values()].reduce((a, b) => a + b, 0));
+    const nz = sums.filter(v => v > 0).sort((a, b) => a - b), med = nz.length ? nz[Math.floor(nz.length / 2)] : 0;
+    const top = Math.max(1, ...sums), cap = med * 1.8, outlier = st.shrink && nz.length >= 3 && top > cap * 1.3;
+    const max = outlier ? Math.max(cap, 1) : top;
     const cols = months.map((k, i) => {
-      const segs = (st.cat ? [st.cat] : ids).filter(id => per[i].get(id)).map(id => `<i style="height:${per[i].get(id) / max * 100}%;background:${catColor(id)}"></i>`).join("");
-      return `<div class="trcol"><span class="trtop">${short(sums[i])}</span><div class="trstack" style="height:${Math.max(0, sums[i] / max * 128)}px">${segs}</div><span class="trm${k === t ? " now" : ""}">${+k.slice(5)}月</span></div>`;
+      const segs = (st.cat ? [st.cat] : ids).filter(id => pm[i].get(id)).map(id => `<i style="height:${pm[i].get(id) / sums[i] * 100}%;background:${catColor(id)}"></i>`).join("");
+      const sel = st.m === k;
+      return `<button type="button" class="trcol" data-trm="${k}" aria-pressed="${sel}" aria-label="${monthLabel(k)} ${yen(sums[i])}" style="opacity:${st.m && !sel ? .4 : 1}"><span class="trtop">${short(sums[i])}</span><div class="trstack${sums[i] > max ? " cut" : ""}" style="height:${Math.max(0, Math.min(sums[i], max) / max * 128)}px">${segs}</div><span class="trm${k === t || sel ? " now" : ""}">${+k.slice(5)}月</span></button>`;
     }).join("");
-    const nowI = months.length - 1, pv = nowI - 1;
-    const rows = ids.map(id => {
-      const c = catOf(id), a = per[nowI].get(id) || 0, b = per[pv] ? (per[pv].get(id) || 0) : 0, d = a - b;
-      const dl = d === 0 ? "先月と同じ" : `先月比 <span class="${d > 0 ? "up" : "dn"}">${d > 0 ? "＋" : "−"}${yen(Math.abs(d))}</span>`;
-      return `<button type="button" class="trrow press" data-trc="${esc(id)}" aria-pressed="${st.cat === id}"><span class="csw" style="background:${catColor(id)}"></span><span><span class="ce">${c.icon}</span> ${esc(c.label)}</span><b class="num">${yen(tot.get(id))}</b><span class="s2">今月 ${yen(a)}・${dl}</span></button>`;
+    const ri = st.m ? months.indexOf(st.m) + 1 : all.length - 1;   // 基準の月（all上の位置）
+    const refM = all[ri], cmpM = all[ri - 1];
+    const refTotal = [...per[ri].values()].reduce((a, b) => a + b, 0);
+    const rowIds = st.m ? [...per[ri].keys()].sort((a, b) => per[ri].get(b) - per[ri].get(a)) : ids;
+    const rows = rowIds.map(id => {
+      const c = catOf(id), a = per[ri].get(id) || 0, b = per[ri - 1].get(id) || 0, d = a - b;
+      const dl = d === 0 ? "前の月と同じ" : `前の月比 <span class="${d > 0 ? "up" : "dn"}">${d > 0 ? "＋" : "−"}${yen(Math.abs(d))}</span>`;
+      const main = st.m ? a : tot.get(id);
+      const sub = st.m ? dl : `今月 ${yen(a)}・${dl}`;
+      return `<button type="button" class="trrow press" data-trc="${esc(id)}" aria-pressed="${st.cat === id}"><span class="csw" style="background:${catColor(id)}"></span><span><span class="ce">${c.icon}</span> ${esc(c.label)}</span><b class="num">${yen(main)}</b><span class="s2">${sub}</span></button>`;
     }).join("");
-    return `<div class="chips" style="margin:4px 0 6px"><button class="chip" data-trn="6" aria-pressed="${st.n === 6}">6か月</button><button class="chip" data-trn="12" aria-pressed="${st.n === 12}">12か月</button></div>
+    const head = st.m ? `<div style="display:flex;align-items:center;gap:8px;margin:2px 4px 6px"><b style="font-size:16px">${monthLabel(st.m)}の内訳</b><span class="num" style="font-weight:800">${yen(refTotal)}</span><button type="button" class="mini press" data-trgo="${st.m}" style="margin-left:auto">この月のリスト →</button></div>` : "";
+    return `<div class="chips" style="margin:4px 0 6px"><button class="chip" data-trn="6" aria-pressed="${st.n === 6}">6か月</button><button class="chip" data-trn="12" aria-pressed="${st.n === 12}">12か月</button>${nz.length >= 3 && top > cap * 1.3 ? `<button class="chip" data-trs aria-pressed="${st.shrink}" style="margin-left:auto">大きい月を縮める</button>` : ""}</div>
       <div class="catcard"><div class="trbars">${cols}</div>
-      <span class="sub">${st.cat ? esc(catOf(st.cat).label) + "だけを表示中（もう一度タップで全体）" : "カテゴリごとの色分け。下の行をタップすると、そのカテゴリだけ見られます。"}</span></div>
-      <div style="margin-top:10px">${rows || `<div class="empty">まだ記録がありません</div>`}</div>`;
+      <span class="sub">${st.cat ? esc(catOf(st.cat).label) + "だけを表示中。" : ""}棒をタップするとその月の内訳、下の行をタップするとそのカテゴリだけ表示します。</span></div>
+      <div style="margin-top:10px">${head}${rows || `<div class="empty">この期間の記録はありません</div>`}</div>`;
   };
   openSheet(`<div class="shead"><button class="link" data-close>閉じる</button><h3>月ごとの推移</h3><span></span></div><div id="tr-body">${body()}</div>`, "", sheet => {
     sheet.addEventListener("click", ev => {
-      const n = ev.target.closest("[data-trn]"), c = ev.target.closest("[data-trc]");
-      if(n) st.n = +n.dataset.trn; else if(c) st.cat = st.cat === c.dataset.trc ? "" : c.dataset.trc; else return;
+      const go = ev.target.closest("[data-trgo]");
+      if(go){ S.filter = go.dataset.trgo; S.limit = 300; S.q = ""; S.cat = ""; closeSheet(); goTab("list"); return; }
+      const sh = ev.target.closest("[data-trs]"), n = ev.target.closest("[data-trn]"), c = ev.target.closest("[data-trc]"), mm = ev.target.closest("[data-trm]");
+      if(sh) st.shrink = !st.shrink; else if(n) st.n = +n.dataset.trn; else if(c) st.cat = st.cat === c.dataset.trc ? "" : c.dataset.trc; else if(mm) st.m = st.m === mm.dataset.trm ? "" : mm.dataset.trm; else return;
       $("#tr-body", sheet).innerHTML = body();
     });
   });
+}
+function personSheet(p, period){
+  period = period || "this";
+  const t = ym(today()), lm = prevMonth(t);
+  const all = sorted(S.entries.filter(e => e.payer === p));
+  const list = all.filter(e => period === "all" || ym(e.date) === (period === "last" ? lm : t));
+  const sum = list.filter(e => e.type !== "loan").reduce((a, e) => a + e.amount, 0);
+  const loans = list.filter(e => e.type === "loan").reduce((a, e) => a + e.amount, 0);
+  const shown = list.slice(0, 200);
+  const chip = (k, l) => `<button class="chip" data-pp="${k}" aria-pressed="${period === k}">${l}</button>`;
+  openSheet(`<div class="shead"><button class="link" data-close>閉じる</button><h3>${esc(name(p))}の支払い</h3><span></span></div>
+    <div class="catcard" style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:8px">${whoChip(p)}<span class="sub">${list.length}件</span></div>
+      <div class="msum"><small>立て替えた合計</small><b class="num">${yen(sum)}</b></div>${loans ? `<span class="sub">ほかに貸し借り ${yen(loans)}</span>` : ""}</div>
+    <div class="chips" style="margin-bottom:8px">${chip("this", "今月")}${chip("last", "先月")}${chip("all", "すべて")}</div>
+    <div class="list">${shown.length ? shown.map(e => `<button type="button" class="prow" data-edit="${esc(e.id)}"><span class="t">${e.category ? `<span class="ce">${catOf(e.category).icon}</span> ` : ""}${esc(e.title || (e.type === "loan" ? "貸し借り" : "立て替え"))}</span><span class="n">${yen(e.amount)}</span><span class="d">${shortDate(e.date)}・${e.type === "loan" ? "貸し借り" : (e.share === 1 ? "全額相手" : "割り勘")}</span></button>`).join("") + (list.length > shown.length ? `<div class="empty">新しい200件を表示しています</div>` : "") : `<div class="empty">この期間の記録はありません</div>`}</div>`, "", sheet => {
+    sheet.addEventListener("click", ev => { const b = ev.target.closest("[data-pp]"); if(b) return personSheet(p, b.dataset.pp); const r = ev.target.closest("[data-edit]"); if(r){ const e = S.entries.find(x => x.id === r.dataset.edit); if(e) entrySheet(e); } });
+  });
+}
+async function backupNow(btn){
+  if(btn.disabled) return; btn.disabled = true; const old = btn.textContent; btn.textContent = "バックアップ中…";
+  try{ const r = await api("backupNow"); toast("バックアップしました（Googleドライブに" + r.kept + "個保管中）"); }
+  catch(err){ if(err.network) toast("オフラインのため取れません"); else if(/BAD_PASS|LOCKED/.test(String(err.message))) handleErr(err); else toast("取れませんでした。GASの再承認が必要かもしれません"); }
+  finally{ btn.disabled = false; btn.textContent = old; }
 }
 function recapSheet(m){
   const ex = S.entries.filter(e => ym(e.date) === m && e.type !== "loan");
@@ -1519,8 +1571,9 @@ document.addEventListener("click", ev => {
   const tab = t.closest("[data-tab]"); if(tab) return goTab(tab.dataset.tab);
   if(t.closest("[data-refresh]") && !$("#layer").innerHTML) return refresh();
   const th = t.closest("[data-theme-set]"); if(th){ ls.set("theme", th.dataset.themeSet); applyTheme(th.dataset.themeSet); render(); return; }
-  const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else if(k === "import") importSheet(); else if(k === "autocat") autoCatSheet(); else exportCsv(); return; }
+  const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else if(k === "import") importSheet(); else if(k === "autocat") autoCatSheet(); else if(k === "backup") backupNow(d); else exportCsv(); return; }
   if(t.closest("[data-trend]")) return trendSheet();
+  const pp = t.closest("[data-person]"); if(pp && !$("#layer").innerHTML) return personSheet(pp.dataset.person);
   const rc = t.closest("[data-recap]"); if(rc) return recapSheet(rc.dataset.recap);
   if($("#layer").innerHTML) return;
   const ed = t.closest("[data-edit]"); if(ed){ const e = S.entries.find(x => x.id === ed.dataset.edit); if(e) entrySheet(e); return; }
@@ -1620,6 +1673,12 @@ if("serviceWorker" in navigator) window.addEventListener("load", () => navigator
   const end = () => { if(!on) return; on = false; const go = pull >= TH; pull = 0; setP(0, true); if(go) refresh(); };
   addEventListener("touchend", end, { passive: true }); addEventListener("touchcancel", end, { passive: true });
 })();
+document.addEventListener("pointerdown", e => {
+  const v = e.target.closest && e.target.closest(".amtview"); if(!v) return;
+  v.classList.remove("tap"); void v.offsetWidth; v.classList.add("tap");
+  try{ navigator.vibrate && navigator.vibrate(8); }catch{}
+});
+document.addEventListener("animationend", e => { if(e.animationName === "amtTap") e.target.classList.remove("tap"); });
 window.addEventListener("online", () => { if(S.locked || !S.pass) return; S.offline = false; flush(); load(); });
 window.addEventListener("offline", () => { S.offline = true; renderStatus(); });
 document.addEventListener("visibilitychange", () => {
