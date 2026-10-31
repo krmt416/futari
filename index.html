@@ -185,6 +185,8 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .amtview .total.zero{color:var(--line)}
 .amtview{border:2px solid var(--tint);cursor:text;transition:transform .12s,box-shadow .2s;box-shadow:0 0 0 4px color-mix(in srgb,var(--tint) 14%,transparent);-webkit-tap-highlight-color:transparent}
 .amtview.tap{animation:amtTap .28s ease-out}
+.sheet.typing .amtview{border-color:var(--line);box-shadow:none;cursor:pointer}
+.sheet.typing .amtview .total::after{display:none}
 @keyframes amtTap{0%{transform:scale(1);box-shadow:0 0 0 4px color-mix(in srgb,var(--tint) 14%,transparent)}35%{transform:scale(.985);box-shadow:0 0 0 9px color-mix(in srgb,var(--tint) 26%,transparent)}100%{transform:scale(1);box-shadow:0 0 0 4px color-mix(in srgb,var(--tint) 14%,transparent)}}
 .amtview .total::after{content:"";display:inline-block;width:3px;height:.85em;margin-left:5px;border-radius:2px;background:var(--tint);vertical-align:-.08em;animation:caret 1.05s steps(1) infinite}
 @keyframes caret{50%{opacity:0}}
@@ -1675,9 +1677,13 @@ if("serviceWorker" in navigator) window.addEventListener("load", () => navigator
 })();
 document.addEventListener("pointerdown", e => {
   const v = e.target.closest && e.target.closest(".amtview"); if(!v) return;
+  const ae = document.activeElement; if(ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) ae.blur();   // 金額欄をタップ → 文字入力を終えて、金額入力に戻る
   v.classList.remove("tap"); void v.offsetWidth; v.classList.add("tap");
   try{ navigator.vibrate && navigator.vibrate(8); }catch{}
 });
+const typing = on => { const sh = document.querySelector("#layer .sheet"); if(sh) sh.classList.toggle("typing", on); };
+document.addEventListener("focusin", e => { if(e.target.matches && e.target.matches("input,textarea") && e.target.closest(".sheet")) typing(true); });
+document.addEventListener("focusout", e => { if(e.target.matches && e.target.matches("input,textarea")) setTimeout(() => { const a = document.activeElement; if(!(a && a.matches && a.matches("input,textarea") && a.closest(".sheet"))) typing(false); }, 0); });
 document.addEventListener("animationend", e => { if(e.animationName === "amtTap") e.target.classList.remove("tap"); });
 window.addEventListener("online", () => { if(S.locked || !S.pass) return; S.offline = false; flush(); load(); });
 window.addEventListener("offline", () => { S.offline = true; renderStatus(); });
