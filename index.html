@@ -513,7 +513,7 @@ async function toggleBadge(){
 }
 let refreshing = false;
 async function refresh(){
-  if(refreshing) return; refreshing = true;
+  if(refreshing || S.locked || !S.pass) return; refreshing = true;
   const spin = on => document.querySelectorAll("[data-refresh]").forEach(b => b.classList.toggle("spin", on));
   spin(true);
   const t0 = Date.now();
@@ -521,7 +521,7 @@ async function refresh(){
   spin(true); // 再描画でボタンが作り直されるので、回転をもう一度付ける
   await new Promise(r => setTimeout(r, Math.max(0, 600 - (Date.now() - t0)))); // くるっと回る時間を最低限確保
   refreshing = false; spin(false);
-  if(!S.err && !S.offline && !S.locked) toast("最新の状態にしました");
+  if(!S.err && !S.offline && !S.locked) toast(Q.length ? "送信待ちの記録があります。送信してから更新します" : "最新の状態にしました");
 }
 async function load(){
   if(!API_URL.startsWith("http")){ S.err = "index.html の API_URL に GAS のURLを設定してください。"; S.ready = true; render(); return; }
@@ -777,7 +777,7 @@ function monthCardHTML(cm, shown){
   const thisM = ym(today());
   const all = [...S.entries.map(e => e.date), ...S.settlements.map(x => x.date)].map(ym).filter(Boolean).sort();
   const minM = all[0] || cm;
-  const filtering = !!(S.q || S.cat), es = (filtering ? shown : S.entries.filter(e => ym(e.date) === cm)).filter(e => e.type !== "loan");
+  const filtering = !!(S.q.trim() || S.cat), es = (filtering ? shown : S.entries.filter(e => ym(e.date) === cm)).filter(e => e.type !== "loan");
   const ta = es.filter(e => e.payer === "a").reduce((c, e) => c + e.amount, 0), tb = es.filter(e => e.payer === "b").reduce((c, e) => c + e.amount, 0);
   const st = S.settlements.filter(x => ym(x.date) === cm).reduce((c, x) => c + x.amount, 0);
   return `<div class="mcard">
@@ -932,7 +932,7 @@ function keypadHTML(label){
 function bindKeypad(sheet, st, onChange){
   const press = key => { st.expr = keyInput(st.expr, key); onChange(); };
   let lpT = null, lpDone = false;
-  sheet.addEventListener("click", ev => { const b = ev.target.closest("[data-key]"); if(!b) return; if(lpDone){ lpDone = false; return; } press(b.dataset.key); });
+  sheet.addEventListener("click", ev => { const b = ev.target.closest("[data-key]"); if(!b) return; { const ae = document.activeElement; if(ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) ae.blur(); } if(lpDone){ lpDone = false; return; } press(b.dataset.key); });
   sheet.addEventListener("pointerdown", ev => { lpDone = false; const b = ev.target.closest('[data-key="⌫"]'); if(!b) return; lpT = setTimeout(() => { lpDone = true; press("C"); }, 500); });
   ["pointerup","pointerleave","pointercancel"].forEach(t => sheet.addEventListener(t, () => clearTimeout(lpT)));
   sheet.addEventListener("contextmenu", ev => { if(ev.target.closest("[data-key]")) ev.preventDefault(); });
@@ -1435,6 +1435,7 @@ function trendSheet(){
     if(st.m && !months.includes(st.m)) st.m = "";
     const tot = new Map(); pm.forEach(mp => mp.forEach((v, id) => tot.set(id, (tot.get(id) || 0) + v)));
     const ids = [...tot.keys()].sort((a, b) => tot.get(b) - tot.get(a));
+    if(st.cat && !tot.has(st.cat)) st.cat = "";
     const sums = pm.map(mp => st.cat ? (mp.get(st.cat) || 0) : [...mp.values()].reduce((a, b) => a + b, 0));
     const nz = sums.filter(v => v > 0).sort((a, b) => a - b), med = nz.length ? nz[Math.floor(nz.length / 2)] : 0;
     const top = Math.max(1, ...sums), cap = med * 1.8, outlier = st.shrink && nz.length >= 3 && top > cap * 1.3;
@@ -1447,7 +1448,7 @@ function trendSheet(){
     const ri = st.m ? months.indexOf(st.m) + 1 : all.length - 1;   // 基準の月（all上の位置）
     const refM = all[ri], cmpM = all[ri - 1];
     const refTotal = [...per[ri].values()].reduce((a, b) => a + b, 0);
-    const rowIds = st.m ? [...per[ri].keys()].sort((a, b) => per[ri].get(b) - per[ri].get(a)) : ids;
+    const rowIds = st.m ? [...new Set([...per[ri].keys(), ...(st.cat ? [st.cat] : [])])].sort((a, b) => (per[ri].get(b) || 0) - (per[ri].get(a) || 0)) : ids;
     const rows = rowIds.map(id => {
       const c = catOf(id), a = per[ri].get(id) || 0, b = per[ri - 1].get(id) || 0, d = a - b;
       const dl = d === 0 ? "前の月と同じ" : `前の月比 <span class="${d > 0 ? "up" : "dn"}">${d > 0 ? "＋" : "−"}${yen(Math.abs(d))}</span>`;
@@ -1488,11 +1489,12 @@ function personSheet(p, period){
     sheet.addEventListener("click", ev => { const b = ev.target.closest("[data-pp]"); if(b) return personSheet(p, b.dataset.pp); const r = ev.target.closest("[data-edit]"); if(r){ const e = S.entries.find(x => x.id === r.dataset.edit); if(e) entrySheet(e); } });
   });
 }
+let backingUp = false;
 async function backupNow(btn){
-  if(btn.disabled) return; btn.disabled = true; const old = btn.textContent; btn.textContent = "バックアップ中…";
+  if(backingUp) return; backingUp = true; btn.disabled = true; const old = btn.textContent; btn.textContent = "バックアップ中…";
   try{ const r = await api("backupNow"); toast("バックアップしました（Googleドライブに" + r.kept + "個保管中）"); }
   catch(err){ if(err.network) toast("オフラインのため取れません"); else if(/BAD_PASS|LOCKED/.test(String(err.message))) handleErr(err); else toast("取れませんでした。GASの再承認が必要かもしれません"); }
-  finally{ btn.disabled = false; btn.textContent = old; }
+  finally{ backingUp = false; btn.disabled = false; btn.textContent = old; }
 }
 function recapSheet(m){
   const ex = S.entries.filter(e => ym(e.date) === m && e.type !== "loan");
@@ -1663,7 +1665,8 @@ if("serviceWorker" in navigator) window.addEventListener("load", () => navigator
   let y0 = 0, x0 = 0, pull = 0, on = false;
   const TH = 70, setP = (d, snap) => { el.style.transition = snap ? "transform .25s,opacity .25s" : "none"; el.style.transform = `translate(-50%,${d - 44}px) rotate(${d * 4}deg)`; el.style.opacity = Math.min(1, d / TH); el.classList.toggle("ready", d >= TH); };
   addEventListener("touchstart", e => {
-    on = false; if(e.touches.length !== 1 || window.scrollY > 0 || $("#layer").innerHTML || refreshing || e.target.closest("input,textarea,.sw.open")) return;
+    if(e.touches.length !== 1 && pull){ pull = 0; setP(0, true); }
+    on = false; if(e.touches.length !== 1 || window.scrollY > 0 || $("#layer").innerHTML || document.querySelector(".ov") || S.locked || !S.pass || !S.ready || refreshing || e.target.closest("input,textarea")) return;
     y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; pull = 0; on = true;
   }, { passive: true });
   addEventListener("touchmove", e => {
@@ -1672,14 +1675,21 @@ if("serviceWorker" in navigator) window.addEventListener("load", () => navigator
     if(window.scrollY > 0){ on = false; setP(0, true); return; }
     pull = Math.min(110, dy * 0.5); setP(pull); if(e.cancelable) e.preventDefault();
   }, { passive: false });
-  const end = () => { if(!on) return; on = false; const go = pull >= TH; pull = 0; setP(0, true); if(go) refresh(); };
+  const end = () => { if(!on){ if(pull){ pull = 0; setP(0, true); } return; } on = false; const go = pull >= TH; pull = 0; setP(0, true); if(go) refresh(); };
   addEventListener("touchend", end, { passive: true }); addEventListener("touchcancel", end, { passive: true });
 })();
+document.addEventListener("keydown", e => {
+  if((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches('span[data-person][role="button"]')){ e.preventDefault(); e.target.click(); }
+});
 document.addEventListener("pointerdown", e => {
   const v = e.target.closest && e.target.closest(".amtview"); if(!v) return;
-  const ae = document.activeElement; if(ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) ae.blur();   // 金額欄をタップ → 文字入力を終えて、金額入力に戻る
   v.classList.remove("tap"); void v.offsetWidth; v.classList.add("tap");
   try{ navigator.vibrate && navigator.vibrate(8); }catch{}
+});
+// 金額欄をタップ → 文字入力を終えて、金額入力に戻る（指を離した後に行う。途中でキーボードを閉じると画面がずれて、別のボタンを押してしまうため）
+document.addEventListener("click", e => {
+  if(!(e.target.closest && e.target.closest(".amtview"))) return;
+  const ae = document.activeElement; if(ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) ae.blur();
 });
 const typing = on => { const sh = document.querySelector("#layer .sheet"); if(sh) sh.classList.toggle("typing", on); };
 document.addEventListener("focusin", e => { if(e.target.matches && e.target.matches("input,textarea") && e.target.closest(".sheet")) typing(true); });
