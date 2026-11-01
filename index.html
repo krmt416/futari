@@ -120,7 +120,6 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .row .d{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row .amt{grid-row:1 / span 2;grid-column:2;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .row .amt b{font-family:var(--numf);font-weight:800;font-size:18px}
-.rx{font-size:13px;letter-spacing:.05em}
 .tag{font-size:11px;padding:1px 8px;border-radius:999px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .tag.a{background:var(--aSoft);color:var(--a)} .tag.b{background:var(--bSoft);color:var(--b)}
 .tag.k{background:var(--surface2);color:var(--muted)}
@@ -247,11 +246,6 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .submit{height:56px;border:0;border-radius:18px;background:var(--tint);color:var(--onTint);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-color .3s,opacity .2s}
 .submit:disabled{opacity:.35}
 .submit .num{font-weight:800}
-.rxrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.rxrow .lbl{font-size:12px;color:var(--muted);font-weight:700;margin-right:4px}
-.rxbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:20px;display:grid;place-items:center;transition:transform .25s var(--spring)}
-.rxbtn[aria-pressed="true"]{border-color:var(--tint);background:var(--tintSoft);transform:scale(1.08)}
-.partner-rx{font-size:13px;color:var(--muted)}
 .delete{border:0;background:none;color:var(--danger);font-weight:700;padding:8px;align-self:center;font-size:14px}
 .hint{font-size:12px;color:var(--muted);margin:0 4px}
 .field{display:flex;flex-direction:column;gap:6px}
@@ -370,7 +364,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
   .toast{animation:pop .3s var(--spring)}
   @keyframes pop{from{transform:translate(-50%,12px);opacity:0}}
 }
-@media (prefers-reduced-motion:reduce){.roll .dg .col,.sheet,.seg button,.rxbtn{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.roll .dg .col,.sheet,.seg button{transition:none!important}}
 </style>
 </head>
 <body>
@@ -415,7 +409,6 @@ function updateBadge(){
   }catch{}
 }
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-const REACTIONS = ["🙏","😋","☕️","❤️","👍"];
 const DEFAULT_CATS = [
   { id:"eat", icon:"🍽", label:"外食" },
   { id:"cafe", icon:"☕️", label:"カフェ" },
@@ -759,11 +752,10 @@ function activityHTML(){
 function rowEntry(e){
   const loan = e.type === "loan";
   const fresh = e.by && e.by === other(me()) && (e.createdAt||0) > S.dotSince;
-  const rx = Object.values(e.reactions || {}).filter(Boolean).join("");
   return `<div class="sw" data-kind="entry" data-id="${esc(e.id)}"><div class="sa edit"><span>✏️ 編集</span></div><div class="sa del"><span>削除 🗑</span></div><button class="row" data-edit="${esc(e.id)}">
     <span class="t">${fresh ? '<span class="dot" aria-label="新着"></span>' : ""}${e.category ? `<span class="ce" aria-label="${esc(catOf(e.category).label)}">${catOf(e.category).icon}</span>` : ""}${esc(e.title || (loan ? "貸し借り" : "立て替え"))}</span>
     <span class="amt">${tagWho(e.payer, loan ? " が貸した" : "")}<b>${yen(e.amount)}</b></span>
-    <span class="d">${shortDate(e.date)}<span class="tag k">${loan ? "貸し借り" : (e.share === 1 ? "全額相手" : "割り勘")}</span>${String(e.id).startsWith("rec_") ? `<span class="tag k">定期</span>` : ""}${rx ? `<span class="rx" aria-label="リアクション">${rx}</span>` : ""}</span>
+    <span class="d">${shortDate(e.date)}<span class="tag k">${loan ? "貸し借り" : (e.share === 1 ? "全額相手" : "割り勘")}</span>${String(e.id).startsWith("rec_") ? `<span class="tag k">定期</span>` : ""}</span>
   </button></div>`;
 }
 
@@ -1003,7 +995,6 @@ function entrySheet(e, forceType){
       <label class="datechip" id="datechip"><span id="datelbl">${shortDate(st.date)}</span><input id="f-date" type="date" value="${st.date}" aria-label="日付"></label>
       ${loan ? `<span class="hint">全額が相手の負担になります</span>` : `<div class="seg sm" id="share"><button type="button" data-v="0.5" aria-pressed="${st.share!==1}">割り勘</button><button type="button" data-v="1" aria-pressed="${st.share===1}">全額相手の分</button></div>`}
     </div>
-    ${isNew ? "" : reactionRowHTML(e)}
     ${isNew ? "" : `<button type="button" class="delete" id="del">この記録を削除</button>`}
     ${keypadHTML(verb)}
   `, `data-payer="${st.payer}"`, sheet => {
@@ -1022,7 +1013,6 @@ function entrySheet(e, forceType){
       const g = ev.target.closest("[data-sugg]"); if(g){ $("#f-title", sheet).value = g.dataset.sugg; autoCat(); }
       const c = ev.target.closest("#cats [data-cat]"); if(c){ st.cat = st.cat === c.dataset.cat ? "" : c.dataset.cat; st.catTouched = true; st.catAll = false; paintCats(); }
       if(ev.target.closest("#cats [data-catmore]")) catPicker(st.cat, id => { st.cat = id; st.catTouched = true; paintCats(); });
-      const r = ev.target.closest("[data-rx]"); if(r && e){ e = toggleReaction(e, r.dataset.rx); $("#rxrow", sheet).outerHTML = reactionRowHTML(e); }
     });
     const paintCats = () => { $("#cats", sheet).innerHTML = catsHTML(st); };
     const autoCat = () => { if(st.catTouched) return; const g = guessCat($("#f-title", sheet).value.trim()); if(g){ st.cat = g; paintCats(); } };
@@ -1059,24 +1049,6 @@ function deleteSettleUndo(s){
   enqueue("deleteSettlement", [s.id]);
   toast("精算を削除しました", () => { upsertLocal("settlements", snap); render(); enqueue("saveSettlement", [snap]); toast("元に戻しました"); });
 }
-function reactionRowHTML(e){
-  const mine = (e.reactions || {})[me()] || "";
-  const theirs = (e.reactions || {})[other(me())] || "";
-  return `<div class="rxrow" id="rxrow"><span class="lbl">リアクション</span>
-    ${REACTIONS.map(r => `<button type="button" class="rxbtn" data-rx="${r}" aria-pressed="${mine===r}" aria-label="${r}を付ける">${r}</button>`).join("")}
-    ${theirs ? `<span class="partner-rx">${esc(name(other(me())))}：${theirs}</span>` : ""}</div>`;
-}
-function toggleReaction(e, r){
-  const who = me();
-  const next = ((e.reactions || {})[who] === r) ? "" : r;
-  const reactions = { ...(e.reactions || {}) };
-  if(next) reactions[who] = next; else delete reactions[who];
-  const doc = { ...(S.entries.find(x => x.id === e.id) || e), reactions };
-  upsertLocal("entries", doc); render();
-  enqueue("setReaction", [e.id, who, next]);
-  return doc;
-}
-
 function settleSheet(s){
   const isNew = !s;
   const b = Math.round(balance());
