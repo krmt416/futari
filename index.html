@@ -262,6 +262,8 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .frow label{font-weight:700;font-size:14px}
 .frow input{border:0;background:none;text-align:right;width:100%;min-width:0;font-size:16px}
 .frow input:focus{outline:none}
+.frow select{border:0;background:none;text-align:right;text-align-last:right;width:100%;min-width:0;font-size:16px;color:var(--fg);font-family:inherit;-webkit-appearance:none;appearance:none}
+.frow select:focus{outline:none}
 .btn{border:0;border-radius:14px;padding:13px;font-weight:700;background:var(--surface2)}
 .btn.primary{background:var(--accent);color:var(--accentInk)}
 
@@ -503,7 +505,7 @@ function apply(d){
   S.ready = true; S.err = ""; S.locked = false; S.synced = Date.now(); S.offline = false; cache();
   const f = document.activeElement && document.activeElement.id;
   if(f !== "q" && f !== "nA" && f !== "nB") render();
-  updateBadge(); maybeGuide();
+  updateBadge(); maybeGuide(); runRecurring();
 }
 async function toggleBadge(){
   if(ls.get("badge", "") === "1"){ ls.set("badge", ""); try{ navigator.clearAppBadge && navigator.clearAppBadge(); }catch{} render(); toast("バッジをオフにしました"); return; }
@@ -761,7 +763,7 @@ function rowEntry(e){
   return `<div class="sw" data-kind="entry" data-id="${esc(e.id)}"><div class="sa edit"><span>✏️ 編集</span></div><div class="sa del"><span>削除 🗑</span></div><button class="row" data-edit="${esc(e.id)}">
     <span class="t">${fresh ? '<span class="dot" aria-label="新着"></span>' : ""}${e.category ? `<span class="ce" aria-label="${esc(catOf(e.category).label)}">${catOf(e.category).icon}</span>` : ""}${esc(e.title || (loan ? "貸し借り" : "立て替え"))}</span>
     <span class="amt">${tagWho(e.payer, loan ? " が貸した" : "")}<b>${yen(e.amount)}</b></span>
-    <span class="d">${shortDate(e.date)}<span class="tag k">${loan ? "貸し借り" : (e.share === 1 ? "全額相手" : "割り勘")}</span>${rx ? `<span class="rx" aria-label="リアクション">${rx}</span>` : ""}</span>
+    <span class="d">${shortDate(e.date)}<span class="tag k">${loan ? "貸し借り" : (e.share === 1 ? "全額相手" : "割り勘")}</span>${String(e.id).startsWith("rec_") ? `<span class="tag k">定期</span>` : ""}${rx ? `<span class="rx" aria-label="リアクション">${rx}</span>` : ""}</span>
   </button></div>`;
 }
 
@@ -880,6 +882,10 @@ function viewSettings(){
   <section class="field"><span class="flabel">アイコンのバッジ</span>
     <button class="btn" data-do="badge" style="width:100%">新着の数をアイコンに表示：${ls.get("badge","")==="1" ? "オン" : "オフ"}</button>
     <p class="hint">相手の新しい記録の数を、ホーム画面のアイコンに出します。アプリを開いたときや更新したときに反映されます。ホーム画面に追加したアプリで使えます。</p></section>
+  <section class="field"><span class="flabel">定期の立て替え</span>
+    ${(Array.isArray(st.rec) ? st.rec : []).map(r => `<button type="button" class="btn" data-rec="${esc(r.id)}" style="width:100%;margin-bottom:8px;text-align:left;display:flex;justify-content:space-between;gap:8px;${r.on ? "" : "opacity:.5"}"><span>${esc(r.title)}${r.on ? "" : "（停止中）"}</span><span class="num">毎月${r.day === 31 ? "月末" : r.day + "日"}・${yen(r.amount)}</span></button>`).join("")}
+    <button class="btn" data-rec="new" style="width:100%">＋ 定期の立て替えを追加</button>
+    <p class="hint">家賃や光熱費など、毎月同じ支払いを、決めた日に自動で登録します。アプリを開いたときに、まだ登録されていない月の分をまとめて作ります。金額が変わった月は、リストから編集してください。</p></section>
   <section class="field"><span class="flabel">カテゴリ</span>
     <button class="btn" data-do="cats" style="width:100%">カテゴリを追加・編集・削除（${CATS.length}個）</button></section>
   <section class="field"><span class="flabel">データ</span>
@@ -1544,6 +1550,61 @@ function toast(msg, undo){
   document.body.appendChild(t);
   toastT = setTimeout(() => t.remove(), undo ? 5000 : 2000);
 }
+/* ================= 定期の立て替え ================= */
+const nextMonth = m => shiftMonth(m, 1);
+const dueDate = (m, day) => { const y = +m.slice(0, 4), mo = +m.slice(5), dim = new Date(y, mo, 0).getDate(); return `${m}-${String(day >= 31 ? dim : Math.min(day, dim)).padStart(2, "0")}`; };
+function runRecurring(){
+  const rules = S.settings.rec; if(!Array.isArray(rules) || !rules.length || S.locked || !S.pass) return;
+  const t = today(), tm = ym(t); let created = 0, changed = false;
+  const next = rules.map(r => {
+    if(!r.on) return r;
+    let last = r.last || prevMonth(r.start), m = nextMonth(last), n = 0;
+    while(m <= tm && n++ < 24){
+      const date = dueDate(m, r.day); if(date > t) break;
+      const id = `rec_${r.id}_${m}`;
+      if(!S.entries.some(x => x.id === id)){
+        const doc = { id, type: "expense", payer: r.payer, title: r.title, amount: r.amount, date, share: r.share === 1 ? 1 : 0.5, category: r.category || "", createdAt: new Date(date + "T00:00:00").getTime(), updatedAt: Date.now(), by: me(), reactions: {} };
+        upsertLocal("entries", doc); enqueue("saveEntry", [doc]); created++;
+      }
+      last = m; m = nextMonth(m);
+    }
+    if(last !== r.last){ changed = true; return { ...r, last }; }
+    return r;
+  });
+  if(changed) saveSettings({ rec: next });
+  if(created){ render(); toast(`定期の立て替えを${created}件、登録しました`); }
+}
+function recSheet(id){
+  const old = id !== "new" ? (S.settings.rec || []).find(x => x.id === id) : null;
+  const r = old ? { ...old } : { id: "r" + Array.from({ length: 7 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join(""), title: "", amount: 0, payer: me(), share: S.settings.defaultShare === 1 ? 1 : 0.5, category: "", day: Math.min(28, +today().slice(8)), on: true, last: "", start: "" };
+  const list = () => (S.settings.rec || []).filter(x => x.id !== r.id);
+  openSheet(`<div class="shead"><button class="link" data-close>キャンセル</button><h3>${old ? "定期を編集" : "定期を追加"}</h3><span></span></div>
+    <div class="form" style="margin-bottom:12px">
+      <div class="frow"><label for="r-title">件名</label><input id="r-title" value="${esc(r.title)}" maxlength="20" placeholder="例：家賃"></div>
+      <div class="frow"><label for="r-amt">金額（円）</label><input id="r-amt" inputmode="numeric" value="${r.amount || ""}" placeholder="例：90000"></div>
+      <div class="frow"><label for="r-day">日にち</label><select id="r-day">${Array.from({ length: 28 }, (_, i) => `<option value="${i + 1}" ${r.day === i + 1 ? "selected" : ""}>毎月${i + 1}日</option>`).join("")}<option value="31" ${r.day === 31 ? "selected" : ""}>毎月末</option></select></div>
+      <div class="frow"><label for="r-cat">カテゴリ</label><select id="r-cat"><option value="">未分類</option>${CATS.map(c => `<option value="${esc(c.id)}" ${r.category === c.id ? "selected" : ""}>${esc(c.icon)} ${esc(c.label)}</option>`).join("")}</select></div>
+    </div>
+    <div class="seg who2" id="r-payer" style="margin-bottom:8px"><button type="button" class="a" data-p="a" aria-pressed="${r.payer === "a"}">${esc(name("a"))}が払う</button><button type="button" class="b" data-p="b" aria-pressed="${r.payer === "b"}">${esc(name("b"))}が払う</button></div>
+    <div class="seg" id="r-share" style="margin-bottom:14px"><button type="button" data-s="0.5" aria-pressed="${r.share !== 1}">割り勘（半分）</button><button type="button" data-s="1" aria-pressed="${r.share === 1}">全額相手の分</button></div>
+    <button class="btn primary" id="r-save" style="width:100%">保存</button>
+    ${old ? `<button class="btn" id="r-toggle" style="width:100%;margin-top:8px">${r.on ? "いったん停止する" : "再開する"}</button><button class="delete" id="r-del" style="width:100%;margin-top:6px">この定期を削除</button><p class="hint">削除や停止をしても、これまでに登録された記録は残ります。</p>` : ""}`, "", sheet => {
+    const seg = (sel, key, conv) => $(sel, sheet).addEventListener("click", ev => { const b = ev.target.closest("button"); if(!b) return; r[key] = conv(b.dataset[key === "payer" ? "p" : "s"]); [...b.parentNode.children].forEach(x => x.setAttribute("aria-pressed", x === b)); });
+    seg("#r-payer", "payer", v => v); seg("#r-share", "share", v => +v);
+    const commit = rules => { saveSettings({ rec: rules }); closeSheet(); render(); };
+    $("#r-save", sheet).addEventListener("click", () => {
+      const title = cleanTxt($("#r-title", sheet).value, 20), amount = Math.round(Number(String($("#r-amt", sheet).value).replace(/[,\s¥円]/g, "").replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248))));
+      if(!title){ toast("件名を入れてください"); return; } if(!(amount > 0)){ toast("金額を入れてください"); return; }
+      if(!old && list().length >= 30){ toast("定期は30件までです"); return; }
+      r.title = title; r.amount = amount; r.day = +$("#r-day", sheet).value; r.category = $("#r-cat", sheet).value;
+      if(!old){ const t = today(); r.start = dueDate(ym(t), r.day) >= t ? ym(t) : nextMonth(ym(t)); r.last = ""; r.on = true; }
+      commit([...list(), r].sort((a, b) => a.day - b.day));
+      toast(old ? "保存しました" : "定期を追加しました"); runRecurring();
+    });
+    const tg = $("#r-toggle", sheet); tg && tg.addEventListener("click", () => { r.on = !r.on; if(r.on){ r.start = ym(today()); r.last = prevMonth(r.start); } commit([...list(), r].sort((a, b) => a.day - b.day)); toast(r.on ? "再開しました" : "停止しました"); if(r.on) runRecurring(); });
+    const dl = $("#r-del", sheet); dl && dl.addEventListener("click", () => { commit(list()); toast("削除しました"); });
+  });
+}
 function saveSettings(patch){
   Object.assign(S.settings, patch); applyCats(); cache(); render();
   enqueue("saveSettings", [patch]); // 変えた項目だけ送る（古い内容で相手の設定を上書きしないため）
@@ -1577,6 +1638,7 @@ document.addEventListener("click", ev => {
   const th = t.closest("[data-theme-set]"); if(th){ ls.set("theme", th.dataset.themeSet); applyTheme(th.dataset.themeSet); render(); return; }
   const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else if(k === "import") importSheet(); else if(k === "autocat") autoCatSheet(); else if(k === "backup") backupNow(d); else exportCsv(); return; }
   if(t.closest("[data-trend]")) return trendSheet();
+  const rc0 = t.closest("[data-rec]"); if(rc0 && !$("#layer").innerHTML) return recSheet(rc0.dataset.rec);
   const pp = t.closest("[data-person]"); if(pp && !$("#layer").innerHTML) return personSheet(pp.dataset.person);
   const rc = t.closest("[data-recap]"); if(rc) return recapSheet(rc.dataset.recap);
   if($("#layer").innerHTML) return;
