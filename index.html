@@ -108,6 +108,57 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .tile .lbl{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
 .tile .val{font-size:22px;font-weight:800}
 .tile.a .lbl{color:var(--a)} .tile.b .lbl{color:var(--b)}
+.bbar{background:var(--surface);border-radius:16px;padding:14px 14px 12px;margin-bottom:8px}
+.bbar .bh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:800;font-size:14px}
+.bbar .bh .who{padding:0;background:none}
+.bbar .trk{position:relative;height:44px;border-radius:22px;overflow:hidden;display:flex;background:var(--surface2)}
+.bbar .trk b{display:flex;align-items:center;font-family:var(--numf);font-weight:800;font-size:18px;color:#fff;min-width:0;overflow:hidden;white-space:nowrap;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.bbar .trk b.a{background:var(--a);padding-left:12px}
+.bbar .trk b.b{background:var(--b);padding-right:12px;justify-content:flex-end}
+.bbar .tick{position:relative;height:18px}
+.bbar .tick i{position:absolute;left:50%;top:0;width:2px;height:8px;margin-left:-1px;background:var(--muted);opacity:.6}
+.bbar .tick span{position:absolute;left:50%;top:8px;transform:translateX(-50%);font-size:10px;color:var(--muted);font-weight:700}
+.bbar .bm{text-align:center;font-weight:800;font-size:14px;margin-top:6px}
+.mnote{display:flex;gap:10px;align-items:center;background:var(--surface);border-radius:16px;padding:12px 14px;font-size:14px;font-weight:700;line-height:1.5}
+.mnote .e{font-size:22px;line-height:1}
+.mnote span:last-child{min-width:0;overflow-wrap:anywhere}
+.wr{position:fixed;inset:0;z-index:75;color:#fff;display:flex;flex-direction:column;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.wr .wbg{position:absolute;inset:0;transition:background .5s}
+.wr .wbar{position:relative;z-index:2;display:flex;gap:4px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 0}
+.wr .wbar i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden}
+.wr .wbar i b{display:block;height:100%;width:0;background:#fff}
+.wr .wbar i.done b{width:100%}
+.wr .wbar i.cur b{width:100%;transform-origin:left;animation:wfill var(--dur,7s) linear forwards}
+.wr.hold .wbar i.cur b{animation-play-state:paused}
+@keyframes wfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.wr .wx{position:absolute;z-index:3;right:6px;top:calc(env(safe-area-inset-top,0px) + 18px);width:44px;height:44px;border:0;background:none;color:#fff;font-size:26px;line-height:1}
+.wr .wbody{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:28px 28px calc(env(safe-area-inset-bottom,0px) + 40px)}
+.wr .wbody>*{opacity:0;transform:translateY(18px);animation:wup .7s cubic-bezier(.2,.8,.2,1) forwards}
+.wr .wbody>*:nth-child(2){animation-delay:.12s}.wr .wbody>*:nth-child(3){animation-delay:.28s}.wr .wbody>*:nth-child(4){animation-delay:.44s}.wr .wbody>*:nth-child(5){animation-delay:.6s}.wr .wbody>*:nth-child(6){animation-delay:.76s}
+@keyframes wup{to{opacity:1;transform:none}}
+.wr .wk{font-size:17px;font-weight:700;opacity:.9;line-height:1.5}
+.wr .wbig{font-family:var(--numf);font-weight:800;font-size:60px;line-height:1.05;letter-spacing:-.02em;white-space:nowrap}
+.wr .wbig.s{font-size:44px}
+.wr .wmid{font-size:30px;font-weight:800;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.wr .wsub{font-size:15px;font-weight:600;opacity:.85;line-height:1.6}
+.wr .wlist{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.wr .wrow>span:nth-child(2){min-width:0;overflow-wrap:anywhere}
+.wr .wrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;font-weight:700;font-size:17px}
+.wr .wrow .n{font-family:var(--numf);font-weight:800;opacity:.7}
+.wr .wrow .v{font-family:var(--numf);font-weight:800}
+.wr .wb{height:8px;border-radius:4px;background:rgba(255,255,255,.25);overflow:hidden;grid-column:2/4;margin-top:-4px}
+.wr .wb b{display:block;height:100%;background:#fff;border-radius:4px}
+.wr .wmonths{display:flex;align-items:flex-end;gap:5px;height:120px;margin-top:6px}
+.wr .wmonths div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%}
+.wr .wmonths i{display:block;width:100%;border-radius:5px 5px 2px 2px;background:rgba(255,255,255,.35);transform-origin:bottom;animation:wgrow .8s cubic-bezier(.2,.8,.2,1) both;animation-delay:.5s}
+.wr .wmonths i.top{background:#fff}
+.wr .wmonths span{font-size:10px;font-weight:700;opacity:.8}
+@keyframes wgrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.wr .wsplit{display:flex;height:56px;border-radius:28px;overflow:hidden;background:rgba(255,255,255,.2)}
+.wr .wsplit b{display:flex;align-items:center;justify-content:center;font-family:var(--numf);font-weight:800;font-size:18px;min-width:0}
+.wr .wcta{align-self:flex-start;border:0;border-radius:999px;background:#fff;color:#1b1d20;font-weight:800;font-size:16px;padding:14px 26px;margin-top:6px}
+.wr .wtap{position:absolute;z-index:1;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:0;right:0;text-align:center;font-size:12px;font-weight:700;opacity:.6}
+@media (prefers-reduced-motion:reduce){.wr .wbody>*{animation:none;opacity:1;transform:none}.wr .wmonths i{animation:none}}
 .recap-cta{display:flex;align-items:center;gap:12px;background:var(--accentSoft);border:0;border-radius:18px;padding:14px 16px;text-align:left;width:100%}
 .recap-cta b{display:block;font-size:16px}
 .recap-cta span{font-size:12px;color:var(--muted)}
@@ -706,9 +757,12 @@ function viewHome(){
   </section>
   ${statusHTML()}
   ${activityHTML()}
+  ${monthNoteHTML(m)}
+  ${wrapCtaHTML()}
   ${showRecap ? `<button class="recap-cta press" data-recap="${pm}"><div><b>${+pm.slice(5)}月のふたり</b><span>先月の振り返りができました</span></div><span class="go">→</span></button>` : ""}
   <section>
     <h2>${+m.slice(5)}月に立て替えた額</h2>
+    ${balanceBarHTML(m)}
     <div class="split">
       <button type="button" class="tile p a press" data-person="a"><span class="lbl"><span class="ini a">${esc(ini("a"))}</span>${esc(S.settings.nameA)}<span class="go">›</span></span><span class="val num">${yen(sumBy("a"))}</span></button>
       <button type="button" class="tile p b press" data-person="b"><span class="lbl"><span class="ini b">${esc(ini("b"))}</span>${esc(S.settings.nameB)}<span class="go">›</span></span><span class="val num">${yen(sumBy("b"))}</span></button>
@@ -737,6 +791,12 @@ function catSectionHTML(m){
     ${rows.length > 5 ? `<div class="more"><span>ほか${rows.length - 5}カテゴリ</span></div>` : ""}
     <button type="button" class="mini press" data-trend style="align-self:flex-start">月ごとの推移を見る</button>
   </div></section>`;
+}
+function wrapCtaHTML(){
+  const t = today(), mo = +t.slice(5, 7); if(mo < 11 && mo !== 1) return "";
+  const y = mo === 1 ? String(+t.slice(0, 4) - 1) : t.slice(0, 4), d = yearStats(y);
+  if(!d || d.es.length < 5) return "";
+  return `<button class="recap-cta press" data-year="${y}" style="background:linear-gradient(135deg,#2f7d68,#c2566e);color:#fff"><div><b style="color:#fff">${y}年のふたり</b><span style="color:rgba(255,255,255,.85)">1年のふりかえりができました</span></div><span class="go" style="color:#fff">▶</span></button>`;
 }
 function activityHTML(){
   const items = [
@@ -878,6 +938,9 @@ function viewSettings(){
     ${(Array.isArray(st.rec) ? st.rec : []).map(r => `<button type="button" class="btn" data-rec="${esc(r.id)}" style="width:100%;margin-bottom:8px;text-align:left;display:flex;justify-content:space-between;gap:8px;${r.on ? "" : "opacity:.5"}"><span>${esc(r.title)}${r.on ? "" : "（停止中）"}</span><span class="num">毎月${r.day === 31 ? "月末" : r.day + "日"}・${yen(r.amount)}</span></button>`).join("")}
     <button class="btn" data-rec="new" style="width:100%">＋ 定期の立て替えを追加</button>
     <p class="hint">家賃や光熱費など、毎月同じ支払いを、決めた日に自動で登録します。アプリを開いたときに、まだ登録されていない月の分をまとめて作ります。金額が変わった月は、リストから編集してください。</p></section>
+  <section class="field"><span class="flabel">年間ふりかえり</span>
+    ${wrappedYears().slice(0, 4).map(y => `<button class="btn" data-year="${y}" style="width:100%;margin-bottom:8px">${y}年のふりかえりを見る</button>`).join("") || `<p class="hint">記録がたまると、ここから見られます。</p>`}
+    <p class="hint">11月から、ホームにも出ます。ストーリー形式で、タップで進みます。</p></section>
   <section class="field"><span class="flabel">カテゴリ</span>
     <button class="btn" data-do="cats" style="width:100%">カテゴリを追加・編集・削除（${CATS.length}個）</button></section>
   <section class="field"><span class="flabel">データ</span>
@@ -1394,6 +1457,119 @@ function showGuide(){
 }
 function maybeGuide(){ let seen = ""; try{ seen = localStorage.getItem("guide") || ""; }catch{} if(!seen) setTimeout(showGuide, 500); }
 
+/* ================= 今月のひとこと ================= */
+function balanceBarHTML(m){
+  const es = S.entries.filter(e => e.type !== "loan" && ym(e.date) === m);
+  const pa = es.filter(e => e.payer === "a").reduce((a, e) => a + e.amount, 0), pb = es.filter(e => e.payer === "b").reduce((a, e) => a + e.amount, 0), tot = pa + pb;
+  if(!tot) return "";
+  const ra = Math.round(pa / tot * 100), rb = 100 - ra, diff = Math.abs(ra - rb), big = ra > rb ? "a" : "b";
+  const msg = !pa || !pb ? `今月は、${esc(name(pa ? "a" : "b"))}が立て替えています` : diff <= 10 ? "今月は、ほぼ半分ずつ立て替えています" : diff <= 40 ? `今月は、${esc(name(big))}が少し多めに立て替えています` : `今月は、${esc(name(big))}が多めに立て替えています`;
+  return `<div class="bbar" role="img" aria-label="立て替えた割合：${esc(name("a"))} ${ra}パーセント、${esc(name("b"))} ${rb}パーセント">
+    <div class="bh"><span class="who a" style="color:var(--a)">${esc(name("a"))}</span><span class="who b" style="color:var(--b)">${esc(name("b"))}</span></div>
+    <div class="trk"><b class="a" style="width:${ra}%">${ra >= 24 ? ra + "%" : ""}</b><b class="b" style="width:${rb}%">${rb >= 24 ? rb + "%" : ""}</b></div>
+    <div class="tick" aria-hidden="true"><i></i><span>半分</span></div>
+    <div class="bm">${msg}</div></div>`;
+}
+function monthNoteHTML(m){
+  const es = S.entries.filter(e => e.type !== "loan" && ym(e.date) === m);
+  if(!es.length) return "";
+  const cand = [], t = today(), day = +t.slice(8);
+  const total = es.reduce((a, e) => a + e.amount, 0);
+  // 先月との比較（月の後半だけ。月の途中では比べにくいため）
+  if(day >= 15 && m === ym(t)){
+    const cur = new Map(catStats(es).rows.map(r => [r.id, r.sum])), prev = new Map(catStats(S.entries.filter(e => e.type !== "loan" && ym(e.date) === prevMonth(m))).rows.map(r => [r.id, r.sum]));
+    let best = null;
+    cur.forEach((v, id) => { if(id === "none" || !prev.has(id)) return; const d = v - prev.get(id); if(Math.abs(d) >= 3000 && (!best || Math.abs(d) > Math.abs(best.d))) best = { id, d }; });
+    if(best){ const c = catOf(best.id); cand.push([c.icon || "📊", `${esc(c.label)}は、先月より${yen(Math.abs(best.d))}${best.d > 0 ? "多め" : "少なめ"}のペースです`]); }
+  }
+  const tc = new Map(); es.forEach(e => { const k = searchNorm(e.title).trim(); if(!k) return; const o = tc.get(k) || { n: 0, t: e.title }; o.n++; tc.set(k, o); });
+  const top = [...tc.values()].sort((a, b) => b.n - a.n)[0];
+  if(top && top.n >= 3) cand.push(["🔁", `「${esc(top.t)}」は、今月${top.n}回目です`]);
+  if(es.length >= 3){ const big = [...es].sort((a, b) => b.amount - a.amount)[0]; cand.push(["💰", `今月いちばん大きな支払いは、「${esc(big.title || "立て替え")}」の${yen(big.amount)}です`]); }
+  const pa = es.filter(e => e.payer === "a").reduce((a, e) => a + e.amount, 0);
+  if(total >= 10000){ const r = Math.round(pa / total * 100);
+    cand.push(Math.abs(r - 50) <= 5 ? ["⚖️", "今月は、ほぼ半分ずつ立て替えています"] : ["⚖️", `今月は、${esc(name(r > 50 ? "a" : "b"))}が${Math.max(r, 100 - r)}%を立て替えています`]); }
+  if(S.entries.length && balance() === 0) cand.push(["✨", "貸し借りはゼロ。すっきりしています"]);
+  cand.push(["📝", `今月の記録は${es.length}件、合わせて${yen(total)}です`]);
+  const [em, tx] = cand[(+t.slice(5, 7) * 31 + day) % cand.length];
+  return `<div class="mnote" aria-label="今月のひとこと"><span class="e" aria-hidden="true">${em}</span><span>${tx}</span></div>`;
+}
+
+/* ================= 年間ふりかえり（ストーリー形式） ================= */
+const WR_TITLES = { eat: "外食王", cafe: "カフェの住人", grocery: "買い出しの達人", daily: "暮らしの整え人", transport: "移動の達人", leisure: "遊びの天才", home: "おうち大好き", utility: "暮らしの番人", medical: "健康第一", beauty: "きれいの追求者", clothes: "おしゃれ番長", telecom: "つながる人", travel: "旅人", gift: "贈り物上手", other: "なんでも屋" };
+function yearStats(y){
+  const es = S.entries.filter(e => e.type !== "loan" && String(e.date).startsWith(y + "-"));
+  if(!es.length) return null;
+  const total = es.reduce((a, e) => a + e.amount, 0), byM = Array(12).fill(0);
+  es.forEach(e => { byM[+e.date.slice(5, 7) - 1] += e.amount; });
+  const cats = catStats(es).rows.filter(r => r.id !== "none");
+  const tc = new Map(); es.forEach(e => { const k = searchNorm(e.title).trim(); if(!k) return; const o = tc.get(k) || { n: 0, sum: 0, t: e.title }; o.n++; o.sum += e.amount; tc.set(k, o); });
+  const freq = [...tc.values()].filter(o => o.n >= 2).sort((a, b) => b.n - a.n || b.sum - a.sum).slice(0, 3);
+  const big = [...es].sort((a, b) => b.amount - a.amount)[0];
+  const dow = Array(7).fill(0); es.forEach(e => { dow[new Date(e.date + "T00:00:00").getDay()]++; });
+  const pa = es.filter(e => e.payer === "a").reduce((a, e) => a + e.amount, 0);
+  const st = S.settlements.filter(x => String(x.date).startsWith(y + "-"));
+  const months = byM.filter(v => v > 0).length || 1;
+  return { y, es, total, byM, cats, freq, big, dow, pa, pb: total - pa, settleN: st.length, settleSum: st.reduce((a, x) => a + x.amount, 0), perMonth: Math.round(total / months) };
+}
+function wrappedShow(y){
+  y = String(y); const d = yearStats(y);
+  if(!d){ toast(`${y}年の記録がまだありません`); return; }
+  if(document.querySelector(".wr")) return;
+  const W = ["日", "月", "火", "水", "木", "金", "土"], bgs = [
+    "linear-gradient(160deg,#1f8a6e,#7d3f6b 70%,#c2566e)", "linear-gradient(160deg,#5b2a86,#c2566e)", "linear-gradient(160deg,#d9622b,#8c2f4a)", "linear-gradient(160deg,#1f6f5c,#a3b83a)",
+    "linear-gradient(160deg,#b4235a,#3c1a4f)", "linear-gradient(160deg,#2d6a4f,#f0a04b)", "linear-gradient(160deg,#6a2c91,#e0728f)", "linear-gradient(160deg,#c2566e,#2f7d68)", "linear-gradient(160deg,#17594a,#d4a73a)", "linear-gradient(160deg,#2f7d68,#c2566e)"];
+  const topCat = d.cats[0], topC = topCat && catOf(topCat.id), maxM = Math.max(...d.byM), topMonth = d.byM.indexOf(maxM);
+  const maxDow = Math.max(...d.dow), topDow = d.dow.indexOf(maxDow);
+  const pctA = Math.round(d.pa / d.total * 100), pctB = 100 - pctA, close = Math.abs(pctA - 50) <= 5;
+  const fit = t => `font-size:min(60px,calc((100vw - 56px) / ${(Math.max(t.length, 5) * 0.66).toFixed(2)}))`;
+  const rank = (rows) => `<div class="wlist">${rows.map((r, i) => `<div class="wrow"><span class="n">${i + 1}</span><span>${r.l}</span><span class="v">${r.v}</span>${r.p != null ? `<div class="wb"><b style="width:${r.p}%"></b></div>` : ""}</div>`).join("")}</div>`;
+  const slides = [];
+  slides.push(`<div class="wk">ふたりの立て替え帳</div><div class="wbig">${y}年の<br>ふたり</div><div class="wsub">ふたりで立て替えあった1年を、ふりかえります。</div>`);
+  slides.push(`<div class="wk">この1年で、ふたりが立て替えたのは</div><div class="wbig" style="${fit(yen(d.total))}" data-cu="${d.total}" data-yen="1">¥0</div><div class="wsub">全${d.es.length}回の支払い<br>1か月あたり、約${yen(d.perMonth)}</div>`);
+  if(topCat) slides.push(`<div class="wk">いちばんお金を使ったのは</div><div class="wbig s">${topC.icon} ${esc(topC.label)}</div><div class="wsub">${yen(topCat.sum)}・${topCat.n}回</div>${rank(d.cats.slice(0, 5).map(r => ({ l: `${catOf(r.id).icon} ${esc(catOf(r.id).label)}`, v: yen(r.sum), p: Math.round(r.sum / topCat.sum * 100) })))}`);
+  if(d.freq.length) slides.push(`<div class="wk">いちばん通ったのは</div><div class="wmid">「${esc(d.freq[0].t)}」</div><div class="wbig" data-cu="${d.freq[0].n}" data-suffix="回">0回</div>${rank(d.freq.map(f => ({ l: esc(f.t), v: f.n + "回" })))}`);
+  slides.push(`<div class="wk">いちばん大きな支払いは</div><div class="wbig" style="${fit(yen(d.big.amount))}" data-cu="${d.big.amount}" data-yen="1">¥0</div><div class="wmid">「${esc(d.big.title || "立て替え")}」</div><div class="wsub">${+d.big.date.slice(5, 7)}月${+d.big.date.slice(8)}日・${esc(name(d.big.payer))}が立て替えました</div>`);
+  slides.push(`<div class="wk">いちばん使った月は</div><div class="wbig" data-cu="${topMonth + 1}" data-suffix="月">0月</div><div class="wsub">${yen(maxM)}</div><div class="wmonths" aria-hidden="true">${d.byM.map((v, i) => `<div><i class="${i === topMonth ? "top" : ""}" style="height:${Math.max(3, v / maxM * 100)}%"></i><span>${i + 1}</span></div>`).join("")}</div>`);
+  slides.push(`<div class="wk">いちばん立て替えが多かった曜日は</div><div class="wbig">${W[topDow]}曜日</div><div class="wsub">この1年で${maxDow}回</div>`);
+  slides.push(`<div class="wk">立て替えた割合</div><div class="wsplit">${pctA ? `<b style="flex:${pctA} 1 0;min-width:${pctA >= 8 ? 46 : 0}px;background:#2f7d68">${pctA >= 8 ? pctA + "%" : ""}</b>` : ""}${pctB ? `<b style="flex:${pctB} 1 0;min-width:${pctB >= 8 ? 46 : 0}px;background:#c2566e">${pctB >= 8 ? pctB + "%" : ""}</b>` : ""}</div><div class="wsub">${esc(name("a"))}　${yen(d.pa)}　／　${esc(name("b"))}　${yen(d.pb)}</div><div class="wmid">${!d.pa || !d.pb ? `${esc(name(d.pa ? "a" : "b"))}が、ひとりで立て替えていました` : Math.abs(pctA - pctB) <= 10 ? "ほぼ半分ずつでした" : Math.abs(pctA - pctB) <= 40 ? `${esc(name(pctA > pctB ? "a" : "b"))}が、少し多めでした` : `${esc(name(pctA > pctB ? "a" : "b"))}が、多めでした`}</div>`);
+  if(d.settleN) slides.push(`<div class="wk">返済は</div><div class="wbig" data-cu="${d.settleN}" data-suffix="回">0回</div><div class="wsub">合わせて${yen(d.settleSum)}<br>そのたびに、ふたりの貸し借りをととのえました。</div>`);
+  const ttl = topCat ? (WR_TITLES[topCat.id] || `${topC.label}の人`) : "ふたり";
+  slides.push(`<div class="wk">${y}年のふたりは</div><div class="wbig s">${esc(ttl)}</div><div class="wsub">${topCat ? `${esc(topC.icon)} ${esc(topC.label)}が多かった1年でした。<br>` : ""}来年も、ふたりでいい1年を。</div><button type="button" class="wcta" data-wx>とじる</button>`);
+  let i = 0, timer = 0, startedAt = 0, remain = 0; const DUR = 7000, reduce = window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const o = document.createElement("div"); o.className = "wr"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-label", `${y}年のふりかえり`);
+  document.body.appendChild(o); document.body.classList.add("noscroll");
+  const cleanup = () => { clearTimeout(timer); o.remove(); document.body.classList.remove("noscroll"); };
+  const arm = ms => { clearTimeout(timer); if(reduce || i >= slides.length - 1) return; remain = ms; startedAt = Date.now(); timer = setTimeout(() => go(i + 1), ms); };
+  const countUp = () => o.querySelectorAll("[data-cu]").forEach(el => {
+    const to = +el.dataset.cu, yenf = el.dataset.yen === "1", suf = el.dataset.suffix || "", t0 = performance.now();
+    const f = now => { const p = Math.min(1, (now - t0) / 1100), v = Math.round(to * (1 - Math.pow(1 - p, 3))); el.textContent = (yenf ? "¥" + comma(v) : v) + suf; if(p < 1 && document.body.contains(el)) requestAnimationFrame(f); };
+    requestAnimationFrame(f);
+  });
+  function go(n){
+    if(n < 0) n = 0; if(n >= slides.length){ return; }
+    i = n; o.classList.remove("hold");
+    o.innerHTML = `<div class="wbg" style="background:${bgs[i % bgs.length]}"></div>
+      <div class="wbar" aria-hidden="true">${slides.map((_, k) => `<i class="${k < i ? "done" : k === i && i < slides.length - 1 && !reduce ? "cur" : k === i ? "done" : ""}" style="--dur:${DUR}ms"><b></b></i>`).join("")}</div>
+      <button type="button" class="wx" data-wx aria-label="閉じる">×</button>
+      <div class="wbody">${slides[i]}</div>${i === 0 ? `<div class="wtap">タップで次へ</div>` : ""}`;
+    countUp(); arm(DUR);
+  }
+  let downAt = 0;
+  o.addEventListener("pointerdown", () => { downAt = Date.now(); o.classList.add("hold"); clearTimeout(timer); remain = Math.max(800, remain - (Date.now() - startedAt)); });
+  const release = () => { if(o.classList.contains("hold")){ o.classList.remove("hold"); arm(remain); } };
+  o.addEventListener("pointerup", release); o.addEventListener("pointercancel", release);
+  o.addEventListener("click", ev => {
+    if(ev.target.closest("[data-wx]")) return cleanup();
+    if(Date.now() - downAt > 350) return;   // 長押しして離したときは、ページを進めない
+    const x = ev.clientX / (window.innerWidth || 390);
+    if(x < 0.3) go(i - 1); else if(i < slides.length - 1) go(i + 1);
+  });
+  document.addEventListener("keydown", function k(ev){ if(!document.body.contains(o)){ document.removeEventListener("keydown", k); return; } if(ev.key === "Escape") cleanup(); else if(ev.key === "ArrowRight") go(i + 1); else if(ev.key === "ArrowLeft") go(i - 1); });
+  go(0);
+}
+function wrappedYears(){ return [...new Set(S.entries.filter(e => e.type !== "loan").map(e => String(e.date).slice(0, 4)).filter(Boolean))].sort().reverse(); }
+
 /* ================= 月の振り返り ================= */
 function catRecapHTML(ex){
   const { total, rows } = catStats(ex);
@@ -1543,7 +1719,7 @@ function runRecurring(){
     if(last !== r.last){ changed = true; return { ...r, last }; }
     return r;
   });
-  if(changed) saveSettings({ rec: next });
+  if(changed){ S.settings.rec = next; cache(); enqueue("saveSettings", [{ recLasts: next.filter((r, k) => r.last !== rules[k].last).map(r => ({ id: r.id, last: r.last })) }]); }
   if(created){ render(); toast(`定期の立て替えを${created}件、登録しました`); }
 }
 function recSheet(id){
@@ -1563,18 +1739,29 @@ function recSheet(id){
     ${old ? `<button class="btn" id="r-toggle" style="width:100%;margin-top:8px">${r.on ? "いったん停止する" : "再開する"}</button><button class="delete" id="r-del" style="width:100%;margin-top:6px">この定期を削除</button><p class="hint">削除や停止をしても、これまでに登録された記録は残ります。</p>` : ""}`, "", sheet => {
     const seg = (sel, key, conv) => $(sel, sheet).addEventListener("click", ev => { const b = ev.target.closest("button"); if(!b) return; r[key] = conv(b.dataset[key === "payer" ? "p" : "s"]); [...b.parentNode.children].forEach(x => x.setAttribute("aria-pressed", x === b)); });
     seg("#r-payer", "payer", v => v); seg("#r-share", "share", v => +v);
-    const commit = rules => { saveSettings({ rec: rules }); closeSheet(); render(); };
+    const commit = (rules, op) => { S.settings.rec = rules; cache(); enqueue("saveSettings", [op]); closeSheet(); render(); };
+    const readForm = () => {   // 入力欄の内容を取り込む（全角・カンマ・円記号に対応）
+      const title = cleanTxt($("#r-title", sheet).value, 20), raw = String($("#r-amt", sheet).value).normalize("NFKC").replace(/[,，\s¥￥円]/g, ""), ok = /^\d{1,9}$/.test(raw) && +raw > 0;
+      return { title, amount: ok ? +raw : 0 };
+    };
     $("#r-save", sheet).addEventListener("click", () => {
-      const title = cleanTxt($("#r-title", sheet).value, 20), amount = Math.round(Number(String($("#r-amt", sheet).value).replace(/[,\s¥円]/g, "").replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248))));
-      if(!title){ toast("件名を入れてください"); return; } if(!(amount > 0)){ toast("金額を入れてください"); return; }
+      const { title, amount } = readForm();
+      if((S.settings.ver || 0) < 2){ toast("先にGAS（Code.gs）を新しい版に更新してください"); return; }
+      if(!title){ toast("件名を入れてください"); return; } if(!(amount > 0)){ toast("金額は、1〜999,999,999 の数字で入れてください"); return; }
       if(!old && list().length >= 30){ toast("定期は30件までです"); return; }
       r.title = title; r.amount = amount; r.day = +$("#r-day", sheet).value; r.category = $("#r-cat", sheet).value;
-      if(!old){ const t = today(); r.start = dueDate(ym(t), r.day) >= t ? ym(t) : nextMonth(ym(t)); r.last = ""; r.on = true; }
-      commit([...list(), r].sort((a, b) => a.day - b.day));
+      const t0 = today(), tm0 = ym(t0);
+      if(!old){ r.start = dueDate(tm0, r.day) >= t0 ? tm0 : nextMonth(tm0); r.last = ""; r.on = true; }
+      else if(r.day !== old.day && dueDate(tm0, r.day) < t0 && (r.last || "") < tm0) r.last = tm0;   // 日にちを変えて、すでに過ぎた今月分は作らない
+      commit([...list(), r].sort((a, b) => a.day - b.day), { recUpsert: r });
       toast(old ? "保存しました" : "定期を追加しました"); runRecurring();
     });
-    const tg = $("#r-toggle", sheet); tg && tg.addEventListener("click", () => { r.on = !r.on; if(r.on){ const t = today(), tm = ym(t); r.start = tm; r.last = dueDate(tm, r.day) <= t ? tm : prevMonth(tm); } commit([...list(), r].sort((a, b) => a.day - b.day)); toast(r.on ? "再開しました" : "停止しました"); if(r.on) runRecurring(); });
-    const dl = $("#r-del", sheet); dl && dl.addEventListener("click", () => { commit(list()); toast("削除しました"); });
+    const tg = $("#r-toggle", sheet); tg && tg.addEventListener("click", () => {
+      const f = readForm(); if(f.title) r.title = f.title; if(f.amount > 0) r.amount = f.amount; r.day = +$("#r-day", sheet).value; r.category = $("#r-cat", sheet).value;
+      r.on = !r.on; if(r.on){ const t = today(), tm = ym(t); r.start = tm; r.last = dueDate(tm, r.day) < t ? tm : prevMonth(tm); }
+      commit([...list(), r].sort((a, b) => a.day - b.day), { recUpsert: r }); toast(r.on ? "再開しました" : "停止しました"); if(r.on) runRecurring();
+    });
+    const dl = $("#r-del", sheet); dl && dl.addEventListener("click", () => { commit(list(), { recDelete: r.id }); toast("削除しました"); });
   });
 }
 function saveSettings(patch){
@@ -1610,6 +1797,7 @@ document.addEventListener("click", ev => {
   const th = t.closest("[data-theme-set]"); if(th){ ls.set("theme", th.dataset.themeSet); applyTheme(th.dataset.themeSet); render(); return; }
   const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else if(k === "import") importSheet(); else if(k === "autocat") autoCatSheet(); else if(k === "backup") backupNow(d); else exportCsv(); return; }
   if(t.closest("[data-trend]")) return trendSheet();
+  const yr = t.closest("[data-year]"); if(yr && !$("#layer").innerHTML) return wrappedShow(yr.dataset.year);
   const rc0 = t.closest("[data-rec]"); if(rc0 && !$("#layer").innerHTML) return recSheet(rc0.dataset.rec);
   const pp = t.closest("[data-person]"); if(pp && !$("#layer").innerHTML) return personSheet(pp.dataset.person);
   const rc = t.closest("[data-recap]"); if(rc) return recapSheet(rc.dataset.recap);
@@ -1700,7 +1888,7 @@ if("serviceWorker" in navigator) window.addEventListener("load", () => navigator
   const TH = 70, setP = (d, snap) => { el.style.transition = snap ? "transform .25s,opacity .25s" : "none"; el.style.transform = `translate(-50%,${d - 44}px) rotate(${d * 4}deg)`; el.style.opacity = Math.min(1, d / TH); el.classList.toggle("ready", d >= TH); };
   addEventListener("touchstart", e => {
     if(e.touches.length !== 1 && pull){ pull = 0; setP(0, true); }
-    on = false; if(e.touches.length !== 1 || window.scrollY > 0 || $("#layer").innerHTML || document.querySelector(".ov") || S.locked || !S.pass || !S.ready || refreshing || e.target.closest("input,textarea")) return;
+    on = false; if(e.touches.length !== 1 || window.scrollY > 0 || $("#layer").innerHTML || document.body.classList.contains("noscroll") || document.querySelector(".ov") || S.locked || !S.pass || !S.ready || refreshing || e.target.closest("input,textarea")) return;
     y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; pull = 0; on = true;
   }, { passive: true });
   addEventListener("touchmove", e => {
