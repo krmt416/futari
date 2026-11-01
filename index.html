@@ -793,10 +793,12 @@ function catSectionHTML(m){
   </div></section>`;
 }
 function wrapCtaHTML(){
-  const t = today(), mo = +t.slice(5, 7); if(mo < 11 && mo !== 1) return "";
+  // 12/1〜1/15だけ。2回見たら、または×で閉じたら、もう出さない（設定画面からはいつでも見られる）
+  const t = today(), mo = +t.slice(5, 7), dd = +t.slice(8); if(!(mo === 12 || (mo === 1 && dd <= 15))) return "";
   const y = mo === 1 ? String(+t.slice(0, 4) - 1) : t.slice(0, 4), d = yearStats(y);
   if(!d || d.es.length < 5) return "";
-  return `<button class="recap-cta press" data-year="${y}" style="background:linear-gradient(135deg,#2f7d68,#c2566e);color:#fff"><div><b style="color:#fff">${y}年のふたり</b><span style="color:rgba(255,255,255,.85)">1年のふりかえりができました</span></div><span class="go" style="color:#fff">▶</span></button>`;
+  if(ls.get("wrapHide" + y, "") === "1" || (+ls.get("wrapSeen" + y, "0") || 0) >= 2) return "";
+  return `<div style="position:relative"><button class="recap-cta press" data-year="${y}" style="background:linear-gradient(135deg,#2f7d68,#c2566e);color:#fff"><div><b style="color:#fff">${y}年のふたり</b><span style="color:rgba(255,255,255,.85)">1年のふりかえりができました</span></div><span class="go" style="color:#fff;margin-right:30px">▶</span></button><button type="button" data-wrapx="${y}" aria-label="このお知らせを閉じる" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:none;color:rgba(255,255,255,.85);font-size:20px;line-height:1">×</button></div>`;
 }
 function activityHTML(){
   const items = [
@@ -1516,6 +1518,7 @@ function wrappedShow(y){
   y = String(y); const d = yearStats(y);
   if(!d){ toast(`${y}年の記録がまだありません`); return; }
   if(document.querySelector(".wr")) return;
+  ls.set("wrapSeen" + y, String((+ls.get("wrapSeen" + y, "0") || 0) + 1));
   const W = ["日", "月", "火", "水", "木", "金", "土"], bgs = [
     "linear-gradient(160deg,#1f8a6e,#7d3f6b 70%,#c2566e)", "linear-gradient(160deg,#5b2a86,#c2566e)", "linear-gradient(160deg,#d9622b,#8c2f4a)", "linear-gradient(160deg,#1f6f5c,#a3b83a)",
     "linear-gradient(160deg,#b4235a,#3c1a4f)", "linear-gradient(160deg,#2d6a4f,#f0a04b)", "linear-gradient(160deg,#6a2c91,#e0728f)", "linear-gradient(160deg,#c2566e,#2f7d68)", "linear-gradient(160deg,#17594a,#d4a73a)", "linear-gradient(160deg,#2f7d68,#c2566e)"];
@@ -1539,7 +1542,7 @@ function wrappedShow(y){
   let i = 0, timer = 0, startedAt = 0, remain = 0; const DUR = 7000, reduce = window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches;
   const o = document.createElement("div"); o.className = "wr"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-label", `${y}年のふりかえり`);
   document.body.appendChild(o); document.body.classList.add("noscroll");
-  const cleanup = () => { clearTimeout(timer); o.remove(); document.body.classList.remove("noscroll"); };
+  const cleanup = () => { clearTimeout(timer); o.remove(); document.body.classList.remove("noscroll"); if(S.tab === "home") render(); };
   const arm = ms => { clearTimeout(timer); if(reduce || i >= slides.length - 1) return; remain = ms; startedAt = Date.now(); timer = setTimeout(() => go(i + 1), ms); };
   const countUp = () => o.querySelectorAll("[data-cu]").forEach(el => {
     const to = +el.dataset.cu, yenf = el.dataset.yen === "1", suf = el.dataset.suffix || "", t0 = performance.now();
@@ -1797,6 +1800,7 @@ document.addEventListener("click", ev => {
   const th = t.closest("[data-theme-set]"); if(th){ ls.set("theme", th.dataset.themeSet); applyTheme(th.dataset.themeSet); render(); return; }
   const d = t.closest("[data-do]"); if(d){ const k = d.dataset.do; if(k === "settle") settleSheet(); else if(k === "loan") entrySheet(null, "loan"); else if(k === "guide") showGuide(); else if(k === "cats") catEditor(); else if(k === "badge") toggleBadge(); else if(k === "import") importSheet(); else if(k === "autocat") autoCatSheet(); else if(k === "backup") backupNow(d); else exportCsv(); return; }
   if(t.closest("[data-trend]")) return trendSheet();
+  const wx = t.closest("[data-wrapx]"); if(wx){ ls.set("wrapHide" + wx.dataset.wrapx, "1"); render(); return; }
   const yr = t.closest("[data-year]"); if(yr && !$("#layer").innerHTML) return wrappedShow(yr.dataset.year);
   const rc0 = t.closest("[data-rec]"); if(rc0 && !$("#layer").innerHTML) return recSheet(rc0.dataset.rec);
   const pp = t.closest("[data-person]"); if(pp && !$("#layer").innerHTML) return personSheet(pp.dataset.person);
