@@ -1601,7 +1601,7 @@ function recSheet(id){
       commit([...list(), r].sort((a, b) => a.day - b.day));
       toast(old ? "保存しました" : "定期を追加しました"); runRecurring();
     });
-    const tg = $("#r-toggle", sheet); tg && tg.addEventListener("click", () => { r.on = !r.on; if(r.on){ r.start = ym(today()); r.last = prevMonth(r.start); } commit([...list(), r].sort((a, b) => a.day - b.day)); toast(r.on ? "再開しました" : "停止しました"); if(r.on) runRecurring(); });
+    const tg = $("#r-toggle", sheet); tg && tg.addEventListener("click", () => { r.on = !r.on; if(r.on){ const t = today(), tm = ym(t); r.start = tm; r.last = dueDate(tm, r.day) <= t ? tm : prevMonth(tm); } commit([...list(), r].sort((a, b) => a.day - b.day)); toast(r.on ? "再開しました" : "停止しました"); if(r.on) runRecurring(); });
     const dl = $("#r-del", sheet); dl && dl.addEventListener("click", () => { commit(list()); toast("削除しました"); });
   });
 }
