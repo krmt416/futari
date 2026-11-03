@@ -298,6 +298,13 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .submit:disabled{opacity:.35}
 .submit .num{font-weight:800}
 .delete{border:0;background:none;color:var(--danger);font-weight:700;padding:8px;align-self:center;font-size:14px}
+.sharesum{margin:0 0 7px;padding:7px 12px;border-radius:14px;background:var(--surface);font-size:14px;line-height:1.5;display:flex;flex-direction:column;gap:1px}
+.sharesum small{font-size:11.5px;color:var(--muted)}
+.sharesum:not(:has(b)) small{display:none}
+.sheet[data-full="1"] .sharesum{background:#fdebd3;color:#7a4a12;box-shadow:inset 0 0 0 2px #d9822b}
+.sheet[data-full="1"] .sharesum small{color:#8a5a22}
+.sheet[data-full="1"] .seg.sm button[aria-pressed="true"]{background:#d9822b;color:#fff}
+.sheet[data-full="1"] .submit:not(:disabled){background:#d9822b}
 .hint{font-size:12px;color:var(--muted);margin:0 4px}
 .field{display:flex;flex-direction:column;gap:6px}
 .flabel{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.04em}
@@ -793,9 +800,9 @@ function catSectionHTML(m){
   </div></section>`;
 }
 function wrapCtaHTML(){
-  // 12/1〜1/15だけ。2回見たら、または×で閉じたら、もう出さない（設定画面からはいつでも見られる）
-  const t = today(), mo = +t.slice(5, 7), dd = +t.slice(8); if(!(mo === 12 || (mo === 1 && dd <= 15))) return "";
-  const y = mo === 1 ? String(+t.slice(0, 4) - 1) : t.slice(0, 4), d = yearStats(y);
+  // 12月だけ。2回見たら、または×で閉じたら、もう出さない（設定画面からはいつでも見られる）
+  const t = today(); if(t.slice(5, 7) !== "12") return "";
+  const y = t.slice(0, 4), d = yearStats(y);
   if(!d || d.es.length < 5) return "";
   if(ls.get("wrapHide" + y, "") === "1" || (+ls.get("wrapSeen" + y, "0") || 0) >= 2) return "";
   return `<div style="position:relative"><button class="recap-cta press" data-year="${y}" style="background:linear-gradient(135deg,#2f7d68,#c2566e);color:#fff"><div><b style="color:#fff">${y}年のふたり</b><span style="color:rgba(255,255,255,.85)">1年のふりかえりができました</span></div><span class="go" style="color:#fff;margin-right:30px">▶</span></button><button type="button" data-wrapx="${y}" aria-label="このお知らせを閉じる" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:none;color:rgba(255,255,255,.85);font-size:20px;line-height:1">×</button></div>`;
@@ -981,9 +988,10 @@ const OPI = {
   "−":'<svg class="opi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5.5 12h13"/></svg>',
   "+":'<svg class="opi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></svg>'
 };
-function keypadHTML(label){
+function keypadHTML(label, pre = ""){
   const k = (v, cls = "", lbl = v) => `<button type="button" class="key ${cls}" data-key="${v}" aria-label="${lbl}">${v === "⌫" ? I.back : OPI[v] || v}</button>`;
   return `<div class="keys">
+    ${pre}
     <div class="keypad" role="group" aria-label="金額キー">
       ${k("7")}${k("8")}${k("9")}${k("÷","op","割る")}
       ${k("4")}${k("5")}${k("6")}${k("×","op","かける")}
@@ -1058,10 +1066,10 @@ function entrySheet(e, forceType){
     <div class="cats" id="cats" role="group" aria-label="カテゴリ">${catsHTML(st)}</div>
     <div class="meta">
       <label class="datechip" id="datechip"><span id="datelbl">${shortDate(st.date)}</span><input id="f-date" type="date" value="${st.date}" aria-label="日付"></label>
-      ${loan ? `<span class="hint">全額が相手の負担になります</span>` : `<div class="seg sm" id="share"><button type="button" data-v="0.5" aria-pressed="${st.share!==1}">割り勘</button><button type="button" data-v="1" aria-pressed="${st.share===1}">全額相手の分</button></div>`}
+      ${loan ? `<span class="hint">全額が相手の負担になります</span>` : `<div class="seg sm" id="share"><button type="button" data-v="0.5" aria-pressed="${st.share!==1}">ふたりで半分</button><button type="button" data-v="1" aria-pressed="${st.share===1}" id="shfull"></button></div>`}
     </div>
     ${isNew ? "" : `<button type="button" class="delete" id="del">この記録を削除</button>`}
-    ${keypadHTML(verb)}
+    ${keypadHTML(verb, loan ? "" : `<div class="sharesum" id="sharesum" aria-live="polite"></div>`)}
   `, `data-payer="${st.payer}"`, sheet => {
     const save = $("#save", sheet);
     const update = () => {
@@ -1069,12 +1077,23 @@ function entrySheet(e, forceType){
       $("#amtview", sheet).innerHTML = amountView(st.expr);
       const v = exprValue(st.expr);
       save.disabled = !(v > 0);
+      if(!loan){
+        const o = other(st.payer);
+        $("#shfull", sheet).textContent = `${name(o)}の分（全額）`;
+        sheet.dataset.full = st.share === 1 ? "1" : "";
+        const amt = v > 0 ? Math.round(v * st.share) : 0;
+        $("#sharesum", sheet).innerHTML = v > 0
+          ? (st.share === 1
+            ? `<b>${esc(name(o))}が ${esc(name(st.payer))}に ${yen(amt)} 返す（全額）</b><small>${esc(name(o))}の物を、${esc(name(st.payer))}が代わりに買った場合です</small>`
+            : `<b>${esc(name(o))}が ${esc(name(st.payer))}に ${yen(amt)} 返す</b><small>${yen(v)}の半分</small>`)
+          : `<small>金額を入れると、いくら返すかが出ます</small>`;
+      }
       save.innerHTML = v > 0 ? `${esc(name(st.payer))}の${verb}　<span class="num">${yen(v)}</span>` : "金額を入力";
     };
     bindKeypad(sheet, st, update); update();
     sheet.addEventListener("click", ev => {
       const p = ev.target.closest("#payer button"); if(p){ st.payer = p.dataset.v; [...p.parentNode.children].forEach(b => b.setAttribute("aria-pressed", b === p)); update(); }
-      const s = ev.target.closest("#share button"); if(s){ st.share = +s.dataset.v; [...s.parentNode.children].forEach(b => b.setAttribute("aria-pressed", b === s)); }
+      const s = ev.target.closest("#share button"); if(s){ st.share = +s.dataset.v; [...s.parentNode.children].forEach(b => b.setAttribute("aria-pressed", b === s)); update(); }
       const g = ev.target.closest("[data-sugg]"); if(g){ $("#f-title", sheet).value = g.dataset.sugg; autoCat(); }
       const c = ev.target.closest("#cats [data-cat]"); if(c){ st.cat = st.cat === c.dataset.cat ? "" : c.dataset.cat; st.catTouched = true; st.catAll = false; paintCats(); }
       if(ev.target.closest("#cats [data-catmore]")) catPicker(st.cat, id => { st.cat = id; st.catTouched = true; paintCats(); });
