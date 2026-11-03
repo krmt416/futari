@@ -229,9 +229,9 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .seg.who2 button[aria-pressed="true"].b{background:var(--b);color:var(--onTint)}
 .seg.who2 button[aria-pressed="true"] .ini{background:var(--onTint);color:var(--fg)}
 .seg.sm button{padding:8px 6px;font-size:13px}
-.amtview{background:var(--surface);border-radius:18px;padding:10px 16px 12px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-height:74px;justify-content:flex-end}
+.amtview{background:var(--surface);border-radius:18px;padding:6px 16px 8px;display:flex;flex-direction:column;align-items:flex-end;gap:0;min-height:clamp(58px,9vh,96px);justify-content:flex-end}
 .amtview .expr{font-family:var(--numf);font-weight:600;font-size:15px;color:var(--muted);min-height:1.4em;text-align:right;overflow-wrap:anywhere}
-.amtview .total{font-family:var(--numf);font-weight:800;font-size:40px;line-height:1;color:var(--tint);letter-spacing:-.01em}
+.amtview .total{font-family:var(--numf);font-weight:800;font-size:clamp(36px,4.6vh,42px);line-height:1;color:var(--tint);letter-spacing:-.01em}
 .amtview .total.zero{color:var(--line)}
 .amtview{border:2px solid var(--tint);cursor:text;transition:transform .12s,box-shadow .2s;box-shadow:0 0 0 4px color-mix(in srgb,var(--tint) 14%,transparent);-webkit-tap-highlight-color:transparent}
 .amtview.tap{animation:amtTap .28s ease-out}
@@ -290,17 +290,19 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .keys{margin-top:auto;display:flex;flex-direction:column;gap:7px;padding-top:8px;position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));margin-bottom:calc(-16px - env(safe-area-inset-bottom,0px));background:var(--tintBg);transition:background-color .35s ease}
 .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .key .opi{width:22px;height:22px;display:block}
-.key{height:50px;border:0;border-radius:14px;background:var(--surface);font:700 24px var(--numf);display:grid;place-items:center}
+.key{height:clamp(44px,7.2vh,72px);border:0;border-radius:14px;background:var(--surface);font:700 24px var(--numf);display:grid;place-items:center}
 .key.op{background:var(--tintSoft);color:var(--tint);font-size:26px}
 .key.fn{background:transparent;color:var(--muted);font-size:17px;font-family:var(--font);-webkit-touch-callout:none}
 .key svg{width:24px;height:24px}
-.submit{height:56px;border:0;border-radius:18px;background:var(--tint);color:var(--onTint);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-color .3s,opacity .2s}
+.submit{height:clamp(50px,6.6vh,64px);border:0;border-radius:18px;background:var(--tint);color:var(--onTint);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-color .3s,opacity .2s}
 .submit:disabled{opacity:.35}
 .submit .num{font-weight:800}
 .delete{border:0;background:none;color:var(--danger);font-weight:700;padding:8px;align-self:center;font-size:14px}
-.sharesum{margin:0 0 7px;padding:7px 12px;border-radius:14px;background:var(--surface);font-size:14px;line-height:1.5;display:flex;flex-direction:column;gap:1px}
+.sharesum{margin:0 0 1px;padding:6px 12px;border-radius:14px;background:var(--surface);font-size:14px;line-height:1.5;display:flex;flex-direction:column;gap:1px}
+.sharesum b{font-size:13.5px;text-wrap:balance}
 .sharesum small{font-size:11.5px;color:var(--muted)}
 .sharesum:not(:has(b)) small{display:none}
+@media (max-height:700px){.key{height:40px}.submit{height:46px}.amtview{min-height:50px}.amtview .total{font-size:32px}.sheet .in{gap:8px}}
 .sheet[data-full="1"] .sharesum{background:#fdebd3;color:#7a4a12;box-shadow:inset 0 0 0 2px #d9822b}
 .sheet[data-full="1"] .sharesum small{color:#8a5a22}
 .sheet[data-full="1"] .seg.sm button[aria-pressed="true"]{background:#d9822b;color:#fff}
@@ -1084,8 +1086,8 @@ function entrySheet(e, forceType){
         const amt = v > 0 ? Math.round(v * st.share) : 0;
         $("#sharesum", sheet).innerHTML = v > 0
           ? (st.share === 1
-            ? `<b>${esc(name(o))}が ${esc(name(st.payer))}に ${yen(amt)} 返す（全額）</b><small>${esc(name(o))}の物を、${esc(name(st.payer))}が代わりに買った場合です</small>`
-            : `<b>${esc(name(o))}が ${esc(name(st.payer))}に ${yen(amt)} 返す</b><small>${yen(v)}の半分</small>`)
+            ? `<b>${esc(name(o))}の物を、${esc(name(st.payer))}が ${yen(amt)} 代わりに支払った場合。</b>`
+            : `<b>ふたりで使った ${yen(v)} を、${esc(name(st.payer))}が支払った場合。</b>`)
           : `<small>金額を入れると、いくら返すかが出ます</small>`;
       }
       save.innerHTML = v > 0 ? `${esc(name(st.payer))}の${verb}　<span class="num">${yen(v)}</span>` : "金額を入力";
