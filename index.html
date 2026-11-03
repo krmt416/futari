@@ -290,21 +290,21 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .keys{margin-top:auto;display:flex;flex-direction:column;gap:7px;padding-top:8px;position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));margin-bottom:calc(-16px - env(safe-area-inset-bottom,0px));background:var(--tintBg);transition:background-color .35s ease}
 .keypad{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .key .opi{width:22px;height:22px;display:block}
-.key{height:clamp(42px,calc(46px + (100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 759px)*.13),60px);border:0;border-radius:14px;background:var(--surface);font:700 24px var(--numf);display:grid;place-items:center}
+.key{height:clamp(38px,calc(42px + (100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 759px)*.1),54px);border:0;border-radius:14px;background:var(--surface);font:700 24px var(--numf);display:grid;place-items:center}
 .key.op{background:var(--tintSoft);color:var(--tint);font-size:26px}
 .key.fn{background:transparent;color:var(--muted);font-size:17px;font-family:var(--font);-webkit-touch-callout:none}
 .key svg{width:24px;height:24px}
-.submit{height:clamp(46px,calc(50px + (100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 759px)*.07),56px);border:0;border-radius:18px;background:var(--tint);color:var(--onTint);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-color .3s,opacity .2s}
+.submit{height:clamp(46px,calc(48px + (100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 759px)*.06),54px);border:0;border-radius:18px;background:var(--tint);color:var(--onTint);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;transition:background-color .3s,opacity .2s}
 .submit:disabled{opacity:.35}
 .submit .num{font-weight:800}
 .delete{border:0;background:none;color:var(--danger);font-weight:700;padding:8px;align-self:center;font-size:14px}
 .sharesum{margin:0 0 1px;padding:6px 12px;border-radius:14px;background:var(--surface);font-size:14px;line-height:1.5;display:flex;flex-direction:column;gap:1px}
 .sharesum b{font-size:13.5px;text-wrap:balance}
 .sharesum small{font-size:11.5px;color:var(--muted)}
-.sharesum:not(:has(b)) small{display:none}
+.sharesum.empty{background:transparent;box-shadow:none!important;padding:2px 12px}
 @media (max-height:700px){.key{height:40px}.submit{height:46px}.amtview{min-height:50px}.amtview .total{font-size:32px}.sheet .in{gap:8px}}
-.sheet[data-full="1"] .sharesum{background:#fdebd3;color:#7a4a12;box-shadow:inset 0 0 0 2px #d9822b}
-.sheet[data-full="1"] .sharesum small{color:#8a5a22}
+.sheet[data-full="1"] .sharesum:not(.empty){background:#fdebd3;color:#7a4a12;box-shadow:inset 0 0 0 2px #d9822b}
+.sheet[data-full="1"] .sharesum:not(.empty) small{color:#8a5a22}
 .sheet[data-full="1"] .seg.sm button[aria-pressed="true"]{background:#d9822b;color:#fff}
 .sheet[data-full="1"] .submit:not(:disabled){background:#d9822b}
 .hint{font-size:12px;color:var(--muted);margin:0 4px}
@@ -1066,12 +1066,11 @@ function entrySheet(e, forceType){
     <input class="title-in" id="f-title" placeholder="${loan ? "メモ（例：現金を貸した）" : "件名（例：ランチ）"}" maxlength="40" value="${esc(e?.title||"")}" enterkeyhint="done" autocomplete="off">
     ${sugg.length ? `<div class="sugg" aria-label="よく使う件名">${sugg.map(t => `<button type="button" data-sugg="${esc(t)}">${esc(t)}</button>`).join("")}</div>` : ""}
     <div class="cats" id="cats" role="group" aria-label="カテゴリ">${catsHTML(st)}</div>
-    <div class="meta">
+    ${isNew ? "" : `<button type="button" class="delete" id="del">この記録を削除</button>`}
+    ${keypadHTML(verb, `<div class="meta">
       <label class="datechip" id="datechip"><span id="datelbl">${shortDate(st.date)}</span><input id="f-date" type="date" value="${st.date}" aria-label="日付"></label>
       ${loan ? `<span class="hint">全額が相手の負担になります</span>` : `<div class="seg sm" id="share"><button type="button" data-v="0.5" aria-pressed="${st.share!==1}">ふたりで半分</button><button type="button" data-v="1" aria-pressed="${st.share===1}" id="shfull"></button></div>`}
-    </div>
-    ${isNew ? "" : `<button type="button" class="delete" id="del">この記録を削除</button>`}
-    ${keypadHTML(verb, loan ? "" : `<div class="sharesum" id="sharesum" aria-live="polite"></div>`)}
+    </div>${loan ? "" : `<div class="sharesum" id="sharesum" aria-live="polite"></div>`}`)}
   `, `data-payer="${st.payer}"`, sheet => {
     const save = $("#save", sheet);
     const update = () => {
@@ -1088,7 +1087,8 @@ function entrySheet(e, forceType){
           ? (st.share === 1
             ? `<b>${esc(name(o))}の物を、${esc(name(st.payer))}が ${yen(amt)} 代わりに支払った場合。</b>`
             : `<b>ふたりで使った ${yen(v)} を、${esc(name(st.payer))}が支払った場合。</b>`)
-          : `<small>金額を入れると、いくら返すかが出ます</small>`;
+          : `<small>金額を入れると、内容が出ます</small>`;
+        $("#sharesum", sheet).classList.toggle("empty", !(v > 0));
       }
       save.innerHTML = v > 0 ? `${esc(name(st.payer))}の${verb}　<span class="num">${yen(v)}</span>` : "金額を入力";
     };
