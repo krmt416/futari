@@ -1,6 +1,6 @@
 // 電波がない場所でもアプリを起動できるように、画面ファイルを端末に保存します。
 // オンラインのときは常に最新を取りに行き、3秒以内に取れなければ保存済みを使います。
-const V = "futari-v4";
+const V = "futari-v5";
 const FILES = ["./", "index.html", "manifest.json", "icon-180.png", "icon-512.png"];
 
 self.addEventListener("install", e => {

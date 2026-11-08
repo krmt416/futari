@@ -282,6 +282,7 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .catlist .pct{font-family:var(--numf);font-weight:800;min-width:3.2em;text-align:right}
 .catlist .amt{font-family:var(--numf);font-weight:700;color:var(--muted);font-size:13px;min-width:5.5em;text-align:right}
 .catcard .more{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.sbar{display:flex;gap:8px;align-items:center}.sbar .search{flex:1;min-width:0;width:auto}.catbtn{flex:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .catfilter{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--fg);color:var(--bg);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:700}
 .ce{font-size:15px;line-height:1}
 .meta{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:center}
@@ -855,6 +856,22 @@ function monthCardHTML(cm, shown){
     ${cm < thisM ? `<button class="mini" data-recap="${cm}" style="align-self:flex-start">この月の振り返り</button>` : ""}
   </div>`;
 }
+function catPickerSheet(){
+  const cm = curMonth();
+  const base = S.entries.filter(e => !cm || ym(e.date) === cm);
+  const rows = catStats(base).rows;
+  if(S.cat && !rows.some(x => x.id === S.cat)) rows.push({ id: S.cat, n: 0, sum: 0 });
+  const total = rows.reduce((c, x) => c + x.n, 0);
+  const row = (id, icon, label, sub, on) => `<button type="button" class="ce-row" data-pickc="${esc(id)}" aria-pressed="${on}" style="background:var(--surface)${on ? ";box-shadow:inset 0 0 0 2px var(--fg)" : ""}"><span>${icon} ${esc(label)}</span><span class="chev num">${sub}</span></button>`;
+  openSheet(`<div class="shead"><button class="link" data-close>閉じる</button><h3>カテゴリで絞り込む</h3><span></span></div>
+    <div class="hint" style="margin:0 4px 8px">${cm ? monthLabel(cm) + "の記録から" : "全期間の記録から"}</div>
+    <div>${row("", "📋", "すべてのカテゴリ", total + "件", !S.cat)}${rows.map(x => { const c = catOf(x.id); return row(x.id, c.icon, c.label, `${yen(x.sum)}・${x.n}件`, S.cat === x.id); }).join("")}</div>`, "", sheet => {
+    sheet.addEventListener("click", ev => {
+      const b = ev.target.closest("[data-pickc]"); if(!b) return;
+      S.cat = b.dataset.pickc; S.limit = 300; closeSheet(); render(); window.scrollTo(0, 0);
+    });
+  });
+}
 function monthPickerSheet(){
   const by = new Map();
   S.entries.forEach(e => { const k = ym(e.date); if(!k) return; const o = by.get(k) || { n: 0, sum: 0 }; o.n++; if(e.type !== "loan") o.sum += e.amount; by.set(k, o); });
@@ -911,8 +928,8 @@ function viewList(){
   const chip = (k,l,on) => `<button class="chip" data-filter="${k}" aria-pressed="${on}">${l}</button>`;
   const odd = cm && cm !== t0 && cm !== prevMonth(t0);
   return `${headHTML("立て替えリスト")}
-    <div class="chips">${chip("all","全履歴",!cm)}${chip("this","今月",cm === t0)}${chip("last","先月",cm === prevMonth(t0))}<button class="chip" data-mpick aria-pressed="${!!odd}">${odd ? monthLabel(cm) : "月を選ぶ"} ▾</button>${S.cat ? `<button class="catfilter" data-catclear aria-label="カテゴリの絞り込みを解除">${catOf(S.cat).icon} ${esc(catOf(S.cat).label)} ✕</button>` : ""}</div>
-    <input class="search" id="q" type="search" placeholder="件名・カテゴリ・名前・金額で検索" value="${esc(S.q)}" aria-label="検索">
+    <div class="chips">${chip("all","全履歴",!cm)}${chip("this","今月",cm === t0)}${chip("last","先月",cm === prevMonth(t0))}<button class="chip" data-mpick aria-pressed="${!!odd}">${odd ? monthLabel(cm) : "月を選ぶ"} ▾</button></div>
+    <div class="sbar"><input class="search" id="q" type="search" placeholder="件名・名前・金額で検索" value="${esc(S.q)}" aria-label="検索"><button type="button" class="chip catbtn" data-catpick aria-pressed="${!!S.cat}">${S.cat ? `${catOf(S.cat).icon} ${esc(catOf(S.cat).label)}` : "カテゴリ"} ▾</button></div>
     <div class="view" id="listbody">${listBodyHTML()}</div>`;
 }
 
@@ -1830,6 +1847,7 @@ document.addEventListener("click", ev => {
   const ed = t.closest("[data-edit]"); if(ed){ const e = S.entries.find(x => x.id === ed.dataset.edit); if(e) entrySheet(e); return; }
   const se = t.closest("[data-settle]"); if(se){ const s = S.settlements.find(x => x.id === se.dataset.settle); if(s) settleSheet(s); return; }
   if(t.closest("[data-mpick]")) return monthPickerSheet();
+  if(t.closest("[data-catpick]")) return catPickerSheet();
   const ms = t.closest("[data-mshift]"); if(ms){ const cm = curMonth(); if(cm){ S.filter = shiftMonth(cm, +ms.dataset.mshift); S.limit = 300; render(); } return; }
   const fl = t.closest("[data-filter]"); if(fl){ S.filter = fl.dataset.filter; S.limit = 300; render(); return; }
   if(t.closest("[data-more]")){ S.limit += 300; const lb = $("#listbody"); if(lb) lb.innerHTML = listBodyHTML(); return; }
