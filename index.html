@@ -390,6 +390,10 @@ h2{font-size:13px;letter-spacing:.06em;color:var(--muted);font-weight:500;margin
 .cats .more{color:var(--fg);background:var(--surface2);margin-left:auto;position:sticky;right:0;box-shadow:-12px 0 10px -2px var(--tintBg)}
 .ce-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border:0;border-top:1px solid var(--line);background:none;width:100%;text-align:left;font-weight:700}
 .ce-row:first-child{border-top:0}
+#ce-list .ce-row{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative;background:var(--surface);transition:transform .16s ease,box-shadow .16s ease}
+#ce-list .ce-row.lift{z-index:5;transform:scale(1.025);box-shadow:0 10px 26px rgba(0,0,0,.22);border-radius:14px;transition:box-shadow .16s ease;background:var(--surface)}
+#ce-list.dragging{overflow:visible}
+#ce-list.dragging .ce-row:not(.lift){opacity:.92}
 .ce-row .em{font-size:22px;width:30px;text-align:center}
 .ce-row .chev{margin-left:auto;color:var(--muted)}
 .cename{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:18px;padding:8px 14px}
@@ -1205,8 +1209,9 @@ function catEditor(){
   const cats = () => CATS.map(c => ({ ...c }));
   const listHTML = () => `
     <div class="shead"><button class="link" data-close>閉じる</button><h3>カテゴリの編集</h3><span></span></div>
-    <div class="list">${CATS.map(c => `<button type="button" class="ce-row" data-ce="${esc(c.id)}"><span class="em">${esc(c.icon)}</span>${esc(c.label)}<span class="chev">›</span></button>`).join("")}</div>
+    <div class="list" id="ce-list">${CATS.map(c => `<button type="button" class="ce-row" data-ce="${esc(c.id)}"><span class="em">${esc(c.icon)}</span>${esc(c.label)}<span class="chev">›</span></button>`).join("")}</div>
     <button type="button" class="btn primary press" data-ce-new>＋ 新しいカテゴリを追加</button>
+    <p class="hint">行を長押しすると、ドラッグで並び替えできます。</p>
     <p class="hint">削除しても、過去の記録は消えません（「未分類」として表示されます）。内容はふたりで共有されます。</p>`;
   const editHTML = () => `
     <div class="shead"><button class="link" data-ce-back>戻る</button><h3>${ce.id ? "カテゴリを編集" : "新しいカテゴリ"}</h3><span></span></div>
@@ -1250,6 +1255,63 @@ function catEditor(){
       if(ev.target.id === "ce-name") ce.name = ev.target.value;
       if(ev.target.id === "ce-em" && !ev.isComposing){ const g = firstGlyph(ev.target.value); if(g){ ce.icon = g; $("#ce-prev", sheet).textContent = g; $$("#ce-grid button", sheet).forEach(b => b.setAttribute("aria-pressed", b.dataset.em === g)); } }
     });
+    /* 長押しで並び替え */
+    let drag = null, swallowUntil = 0;
+    const saveOrder = () => {
+      const ids = $$("#ce-list [data-ce]", sheet).map(b => b.dataset.ce), cur = cats();
+      if(ids.length !== cur.length || ids.every((id, i) => id === cur[i].id)) return;
+      const by = new Map(cur.map(c => [c.id, c]));
+      saveSettings({ cats: ids.map(id => by.get(id)).filter(Boolean) }); toast("並び順を変えました");
+    };
+    const endDrag = commit => {
+      if(!drag) return; const d = drag; drag = null;
+      clearTimeout(d.timer); cancelAnimationFrame(d.raf);
+      if(d.active){
+        d.el.classList.remove("lift"); d.el.style.transform = ""; d.list.classList.remove("dragging"); swallowUntil = Date.now() + 450;
+        if(commit) saveOrder(); else show();
+      }
+    };
+    const scrollTick = () => {
+      if(!drag || !drag.active) return;
+      const sr = sheet.getBoundingClientRect(), y = drag.y, edge = 70;
+      const v = y < sr.top + edge ? -Math.ceil((sr.top + edge - y) / 6) : y > sr.bottom - edge ? Math.ceil((y - (sr.bottom - edge)) / 6) : 0;
+      if(v){ sheet.scrollTop += v; place(); }
+      drag.raf = requestAnimationFrame(scrollTick);
+    };
+    const place = () => {
+      const d = drag; if(!d || !d.active) return; const el = d.el;
+      const dy = () => (d.y - d.y0) + (sheet.scrollTop - d.s0) - (el.offsetTop - d.t0);
+      let guard = 0;
+      while(guard++ < 40){
+        const c = el.offsetTop + el.offsetHeight / 2 + dy(), prev = el.previousElementSibling, next = el.nextElementSibling;
+        if(prev && c < prev.offsetTop + prev.offsetHeight / 2){ d.list.insertBefore(el, prev); continue; }
+        if(next && c > next.offsetTop + next.offsetHeight / 2){ d.list.insertBefore(next, el); continue; }
+        break;
+      }
+      el.style.transform = `translateY(${dy()}px) scale(1.025)`;
+    };
+    sheet.addEventListener("pointerdown", ev => {
+      const el = ev.target.closest("#ce-list .ce-row"); if(!el || ce.mode !== "list" || drag || ev.button > 0) return;
+      const list = el.parentElement;
+      drag = { el, list, x: ev.clientX, y: ev.clientY, y0: ev.clientY, x0: ev.clientX, id: ev.pointerId, active: false };
+      drag.timer = setTimeout(() => {
+        if(!drag) return;
+        drag.active = true; drag.t0 = el.offsetTop; drag.s0 = sheet.scrollTop; drag.y0 = drag.y;
+        el.classList.add("lift"); list.classList.add("dragging"); try{ navigator.vibrate && navigator.vibrate(12); }catch{}
+        drag.raf = requestAnimationFrame(scrollTick);
+      }, 380);
+    });
+    sheet.addEventListener("pointermove", ev => {
+      if(!drag || ev.pointerId !== drag.id) return;
+      drag.x = ev.clientX; drag.y = ev.clientY;
+      if(!drag.active){ if(Math.hypot(ev.clientX - drag.x0, ev.clientY - drag.y0) > 9){ clearTimeout(drag.timer); drag = null; } return; }
+      place();
+    });
+    sheet.addEventListener("pointerup", ev => { if(drag && ev.pointerId === drag.id) endDrag(true); });
+    sheet.addEventListener("pointercancel", ev => { if(drag && ev.pointerId === drag.id) endDrag(false); });
+    sheet.addEventListener("touchmove", ev => { if(drag && drag.active) ev.preventDefault(); }, { passive: false });
+    sheet.addEventListener("contextmenu", ev => { if(ev.target.closest("#ce-list")) ev.preventDefault(); });
+    sheet.addEventListener("click", ev => { if(Date.now() < swallowUntil){ ev.stopPropagation(); ev.preventDefault(); } }, true);
     sheet.addEventListener("keydown", ev => { if(ev.key === "Enter" && ev.target.id === "ce-name"){ ev.preventDefault(); ev.target.blur(); } });
   });
 }
